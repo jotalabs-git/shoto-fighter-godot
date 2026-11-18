@@ -59,9 +59,14 @@ cada reacción. El archivo original se mantiene sin edición en el directorio
 local. La atribución de bart figura en **CREDITOS**, incluso si los
 archivos no están instalados.
 
+**Variaciones Kenney CC0:** al instalar el paquete completo Impact Sounds,
+el script asigna once tomas adicionales `*_kenney` para alternarlas con las
+ya incluidas en Git. Los restantes archivos quedan disponibles en la biblioteca
+local para futuras selecciones.
+
 **37 golpes CC0:** al instalar el archivo de Independent.nu, el script
 convierte FLAC a WAV y asigna ocho variantes `*_oga`. El juego alterna
-entre los golpes de Kenney y estas variantes.
+entre las grabaciones de Kenney y estas variantes.
 
 ## Sonniss, opcional y separado
 

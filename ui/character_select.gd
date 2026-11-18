@@ -180,7 +180,14 @@ func _update_cards() -> void:
 		var p2 := _indices[1] == i
 		var marker := ("1" if p1 else "") + ("2" if p2 else "")
 		_cards[i].text = CharacterRegistry.display_name(IDS[i]).replace("EL ", "").replace(" DICKINSON", "") + ("  [" + marker + "]" if marker != "" else "")
-		_cards[i].add_theme_color_override("font_color", GOLD if p1 and p2 else CYAN if p1 else PINK if p2 else WHITE)
+		var accent := GOLD if p1 and p2 else CYAN if p1 else PINK if p2 else MUTED
+		_cards[i].add_theme_color_override("font_color", accent if p1 or p2 else WHITE)
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color("#292238") if p1 or p2 else Color("#1C2030")
+		style.border_color = accent
+		style.set_border_width_all(2 if p1 or p2 else 1)
+		style.set_corner_radius_all(4)
+		_cards[i].add_theme_stylebox_override("normal", style)
 
 func _random_cpu() -> void:
 	var alternatives := IDS.size() - 1

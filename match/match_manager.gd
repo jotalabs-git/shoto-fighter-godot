@@ -10,9 +10,10 @@ extends Node2D
 @export var pushbox_min_sep: float = 44.0
 @export var throw_range: float = 60.0
 @export var view_width: float = 384.0
-@export var cam_min_zoom: float = 0.72
-@export var cam_max_zoom: float = 1.1
-@export var cam_margin: float = 105.0
+@export var cam_min_zoom: float = 0.70
+@export var cam_max_zoom: float = 1.20
+@export var cam_margin: float = 85.0
+@export var cam_follow_speed: float = 5.0
 @export var p2_is_cpu: bool = false
 @export var cpu_difficulty: String = "medium"
 
@@ -98,8 +99,12 @@ func _physics_process(delta: float) -> void:
 		if _shake > 0:
 			off = 5.0 if (_shake % 2 == 0) else -5.0
 			_shake -= 1
-		camera.position.x = cam[0] + off
-		camera.zoom = Vector2(cam[1], cam[1])
+		# Acerca la cámara al pelear juntos y la aleja al retroceder.
+		# Interpolación exponencial para evitar saltos con FPS variables.
+		var follow := 1.0 - exp(-cam_follow_speed * delta)
+		camera.position.x = lerpf(camera.position.x, float(cam[0]), follow) + off
+		var zoom := lerpf(camera.zoom.x, float(cam[1]), follow)
+		camera.zoom = Vector2(zoom, zoom)
 	_update_hud()
 	if match_state.match_over() and _rematch_pressed():
 		match_state.reset_match()
@@ -108,6 +113,12 @@ func _physics_process(delta: float) -> void:
 func _reset_round() -> void:
 	p1.reset_for_round(Vector2(112.0, 180.0), true)
 	p2.reset_for_round(Vector2(272.0, 180.0), false)
+	if camera != null:
+		# Nuevo round: iniciar con el encuadre correcto, sin zoom progresivo
+		# desde una posición heredada del round anterior.
+		var cam := CameraLogic.compute(p1.position.x, p2.position.x, view_width, cam_min_zoom, cam_max_zoom, cam_margin)
+		camera.position.x = cam[0]
+		camera.zoom = Vector2(cam[1], cam[1])
 	for proj in get_tree().get_nodes_in_group("projectile"):
 		proj.queue_free()
 

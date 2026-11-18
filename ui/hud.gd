@@ -11,6 +11,8 @@ const P2_COLOR := Color(0.97, 0.31, 0.44)
 const DANGER_COLOR := Color(1.0, 0.77, 0.28)
 const CRITICAL_COLOR := Color(1.0, 0.31, 0.36)
 
+@onready var p1_name: Label = $P1Name
+@onready var p2_name: Label = $P2Name
 @onready var p1_fill: ColorRect = $P1Fill
 @onready var p2_fill: ColorRect = $P2Fill
 @onready var timer_label: Label = $Timer
@@ -45,6 +47,8 @@ func set_message(message: String) -> void:
 func setup(a: Fighter, b: Fighter) -> void:
 	p1 = a
 	p2 = b
+	p1_name.text = CharacterRegistry.display_name(a.character_id)
+	p2_name.text = CharacterRegistry.display_name(b.character_id)
 
 func _process(_delta: float) -> void:
 	if p1 != null:

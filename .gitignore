@@ -5,7 +5,7 @@
 .godot/
 /android/
 /export/
-export_presets.cfg
+# export_presets.cfg is intentionally versioned for reproducible exports.
 
 # Imported assets cache
 *.import

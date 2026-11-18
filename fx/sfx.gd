@@ -11,6 +11,7 @@ var _players: Array[AudioStreamPlayer] = []
 var _bank: Dictionary = {}
 var _next_player := 0
 var _variation := 0
+var _effort_counter := 0
 
 func _ready() -> void:
 	for i in MAX_VOICES:
@@ -23,7 +24,8 @@ func _ready() -> void:
 func play_attack(fighter: Fighter, move: MoveData) -> void:
 	var kind := "kick" if SoundProfile.impact_key(move).contains("_kick_") else "punch"
 	_play("swing_" + kind, -13.0)
-	if move != null and (move.damage >= 55 or move.is_special):
+	_effort_counter += 1
+	if move != null and (move.damage >= 55 or move.is_special or _effort_counter % 3 == 0):
 		play_voice(fighter.character_id, "effort_" + SoundProfile.attack_weight(move))
 
 func play_impact(_attacker: Fighter, defender: Fighter, move: MoveData, blocked: bool = false) -> void:

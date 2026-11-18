@@ -102,9 +102,9 @@ func _add_preview(side: int, at: Vector2) -> void:
 	camera.near = 0.1
 	camera.far = 40.0
 	camera.position = Vector3(3.6 if side == 0 else -3.6, 2.3, 5.5)
+	vp.add_child(camera)
 	camera.look_at(Vector3(0, 1.27, 0), Vector3.UP)
 	camera.current = true
-	vp.add_child(camera)
 
 	for index in 2:
 		var light := DirectionalLight3D.new()

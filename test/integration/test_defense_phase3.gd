@@ -79,6 +79,12 @@ func test_throw_knocks_down_and_damages() -> void:
 	for i in 5:
 		await get_tree().physics_frame
 		Throws.resolve(atk, dfn, 60.0)
+	# El agarre existe, pero la víctima se mantiene sujeta hasta el
+	# fotograma de impacto (12) antes de recibir los 120 puntos.
+	assert_str(dfn.state_machine.current_state.name).is_equal("Thrown")
+	assert_int(dfn.health).is_equal(1000)
+	for i in 10:
+		await get_tree().physics_frame
 	assert_str(dfn.state_machine.current_state.name).is_equal("Knockdown")
 	assert_int(dfn.health).is_equal(880)     # 1000 - 120
 

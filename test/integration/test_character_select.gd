@@ -39,6 +39,20 @@ func test_selection_shows_two_standing_3d_previews() -> void:
 	assert_str(select._names[0].text).contains("GUITARRISTA")
 	assert_str(select._names[1].text).contains("FRONTMAN")
 
+func test_both_local_players_change_previews_independently() -> void:
+	GameConfig.p2_is_cpu = false
+	var select := SELECT.instantiate()
+	add_child(select)
+	auto_free(select)
+	select._move_selection(0, 2)
+	assert_str(select._names[0].text).contains("OZZY")
+	assert_str(select._names[1].text).contains("FRONTMAN")
+	select._move_selection(1, 3)
+	assert_str(select._names[1].text).contains("BRUCE")
+	assert_str(select._names[0].text).contains("OZZY")
+	assert_bool(is_instance_valid(select._models[0])).is_true()
+	assert_bool(is_instance_valid(select._models[1])).is_true()
+
 func test_character_configuration_is_applied_on_match_enter_tree() -> void:
 	GameConfig.set_characters("ozzy", "bruce")
 	var arena: MatchManager = MATCH.instantiate()

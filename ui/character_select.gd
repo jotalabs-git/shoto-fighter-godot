@@ -154,6 +154,9 @@ func _load_preview(side: int) -> void:
 	if model == null:
 		_status[side].text = "ERROR EN ESCENA 3D"
 		return
+	# El personaje derecho se presenta mirando hacia su contrincante.
+	# El rig GLB usa +X como frente (independiente del art_facing 2D).
+	model.rotation.y = PI if side == 1 else 0.0
 	vp.add_child(model)
 	_models[side] = model
 	var players := model.find_children("*", "AnimationPlayer", true, false)

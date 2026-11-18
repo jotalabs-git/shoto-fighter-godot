@@ -13,7 +13,6 @@ const BG := Color("#0D0C19")
 var _indices: Array[int] = [0, 1]
 var _confirmed: Array[bool] = [false, false]
 var _is_cpu := false
-var _active_mouse_player := 0
 var _models: Array[Node3D] = []
 var _viewport_nodes: Array[SubViewport] = []
 var _names: Array[Label] = []
@@ -190,7 +189,11 @@ func _random_cpu() -> void:
 
 func _pick_card(index: int) -> void:
 	var side := 0 if _is_cpu or not _confirmed[0] else 1
-	_move_selection(side, index)
+	# Mouse: primer clic selecciona, segundo confirma el personaje actual.
+	if _indices[side] == index:
+		_confirm(side)
+	else:
+		_move_selection(side, index)
 
 func _move_selection(side: int, index: int) -> void:
 	if _launching or _confirmed[side] or side == 1 and _is_cpu:

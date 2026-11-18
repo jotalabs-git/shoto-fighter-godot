@@ -1,8 +1,16 @@
 # Diseño de audio — Rock Kombat
 
+> **Actualización:** desde noviembre de 2026 se incluyen 17 OGG reales CC0 de Kenney
+> en `assets/audio/` y locuciones de ROUND/FIGHT/WINNER integradas al match.
+> La síntesis descrita más abajo es el **fallback**. Los bancos externos
+> (Independent.nu, bart CC BY 3.0 y Sonniss) se incorporan localmente con
+> `scripts/install_combat_audio.py`. Ver
+> [instalación](install-combat-audio.md) y
+> [créditos/atribuciones](../assets/audio/CREDITS.md).
+
 ## Estado actual
 
-La implementación en `fx/sfx.gd` genera efectos originales en memoria (PCM, 22.05 kHz, 16 bits) y los reproduce mediante **12 voces simultáneas**. No hace falta descargar ni redistribuir audio externo. Reemplaza al antiguo sintetizador con una única nota que cortaba el sonido anterior.
+La implementación en `fx/sfx.gd` carga primero los OGG CC0 del repositorio y los packs opcionales locales; si falta un recurso, genera el efecto original en memoria (PCM, 22.05 kHz, 16 bits). Reproduce hasta **12 voces simultáneas**. Reemplaza al antiguo sintetizador con una única nota que cortaba el sonido anterior.
 
 ### Eventos y capas
 

@@ -46,7 +46,7 @@ FRONT = {
     "hips": (.02, 0, 1.22), "neck": (.22, 0, 1.90), "head": (.37, 0, 2.51),
     "shoulder_near": (.17, -.31, 1.80), "elbow_near": (.02, -.43, 1.57),
     "hand_near": (.44, -.49, 1.89), "shoulder_far": (.18, .31, 1.80),
-    "elbow_far": (.01, .39, 1.57), "hand_far": (.50, .28, 2.00),
+    "elbow_far": (.060, .34, 1.58), "hand_far": (.591, .205, 1.976),
     "foot_near": (.45, -.19, .15), "knee_near": (.37, -.20, .68),
 }
 GUITAR_GUARD = {
@@ -152,7 +152,7 @@ def actions(character, full):
     }
     result["idle"][-1][1].update({key: base[key] for key in ("foot_near", "foot_far")})
     if vocalist:
-        bob["hand_far"] = (.52, .10, 2.05)
+        bob["hand_far"] = (.603, .178, 2.048)
         result["idle"] = [(5, base), (4, bob), (5, base), (4, result["idle"][-1][1])]
     else:
         bob["hand_near"] = (.505, -.498, 2.032)

@@ -4,8 +4,6 @@ from math import radians
 import bpy
 from mathutils import Matrix, Vector
 
-from poses import STANCE, joint_positions, points
-
 
 def clay(name, hex_color, noise=.08, metallic=0):
     def linear(value):
@@ -89,77 +87,104 @@ class Sculpt:
         return self.bind(obj, name, bone, color)
 
 
-def build_frontman(rig, colors):
-    s = Sculpt(rig, colors)
-    l, t = s.lump, s.tube
-    pelvis = "pelvis"
-    head = "head"
-    l("Waist", pelvis, "pants", (-.055, 0, 1.28), (.24, .30, .27))
-    l("Jacket silhouette", pelvis, "jacket", (.015, 0, 1.67),
-      (.25, .39, .47), -9)
-    l("Shirt panel", pelvis, "dark", (.164, -.205, 1.66), (.13, .14, .33), -10)
-    l("Jacket hem", pelvis, "trim", (.014, -.02, 1.36), (.24, .30, .071))
-    t("Raised collar", pelvis, "trim", (.19, -.31, 1.98), (.21, -.33, 1.75), (.063, .055), .015)
-    t("Left lapel", pelvis, "trim", (-.01, -.317, 1.92), (.16, -.30, 1.58), (.073, .055))
-    l("Belt clasp", pelvis, "metal", (.18, -.28, 1.30), (.087, .05, .066))
-    l("Stage pin", pelvis, "accent", (-.073, -.343, 1.76), (.055, .030, .055))
-    l("Neck", head, "skin", (.053, 0, 2.025), (.137, .15, .19))
-    l("Head", head, "skin", (.088, -.017, 2.397),
-      (.31, .283, .355), -7)
-    l("Jaw", head, "skin", (.235, -.039, 2.235),
-      (.237, .220, .183), 8)
-    l("Cheek", head, "skin", (.213, -.196, 2.373), (.151, .105, .133), -25)
-    l("Nose bridge", head, "skin", (.348, -.137, 2.445), (.137, .104, .131), -30)
-    l("Nose tip", head, "skin", (.433, -.156, 2.397), (.108, .08, .069))
-    l("Nostril", head, "rose", (.444, -.217, 2.373), (.041, .020, .017), -12)
-    l("Ear", head, "skin", (-.091, -.255, 2.381), (.087, .061, .113), -13)
-    l("Ear fold", head, "rose", (-.099, -.305, 2.381), (.046, .020, .067), -13)
-    l("Earring", head, "metal", (-.103, -.321, 2.284), (.043, .024, .05))
-    l("Eye socket", head, "hair", (.260, -.231, 2.487), (.119, .062, .073), 10)
-    l("Eye", head, "white", (.278, -.269, 2.481), (.080, .035, .045), 10)
-    l("Pupil", head, "dark", (.314, -.298, 2.489), (.030, .018, .035))
-    l("Eye reflection", head, "white", (.322, -.314, 2.507), (.011, .008, .012))
-    l("Brow", head, "hair_light", (.24, -.269, 2.555), (.136, .048, .038), -18)
-    l("Mouth crease", head, "mouth", (.333, -.191, 2.265), (.119, .061, .031), -9)
-    l("Open mouth", head, "mouth", (.354, -.205, 2.242), (.098, .057, .057), -12)
-    l("Teeth", head, "white", (.359, -.245, 2.261), (.068, .022, .015), -12)
-    for x, z, tilt in [(-.22, 2.67, -20), (-.10, 2.81, -26), (.03, 2.88, -29),
-                        (.18, 2.86, -35), (.29, 2.78, -45)]:
-        color = "hair_light" if x in (-.10, .18) else "hair"
-        l("Pompadour clay ridge", head, color, (x, -.026, z), (.116, .26, .234), tilt)
-    l("Temple fade", head, "hair", (-.112, -.123, 2.575), (.185, .144, .19), -25)
+def blend(value, start, end):
+    t = min(1.0, max(0.0, (value - start) / (end - start)))
+    return t * t * (3.0 - 2.0 * t)
 
-    joints = joint_positions(STANCE)
-    for side in ("near", "far"):
-        upper, forearm, fist, thigh, shin, boot = (
-            f"{part}_{side}" for part in ("bicep", "forearm", "fist", "thigh", "shin", "boot"))
-        shoulder, elbow = points(joints, upper)
-        _, hand = points(joints, forearm)
-        hip, knee = points(joints, thigh)
-        _, foot = points(joints, shin)
-        t("Sleeve", upper, "jacket", shoulder, elbow, (.146, .152), .13)
-        t("Sleeve seam", upper, "trim", (shoulder[0], shoulder[1] - .075, shoulder[2]),
-          (elbow[0], elbow[1] - .074, elbow[2] + .09), (.070, .079), .055)
-        t("Forearm", forearm, "skin", elbow, hand, (.113, .127), .098)
-        l("Cuff", forearm, "metal", hand, (.112, .13, .112))
-        l("Clay fist", fist, "skin", (hand[0] + .076, hand[1], hand[2]), (.151, .129, .123), -10)
-        l("Thumb", fist, "skin", (hand[0] + .023, hand[1] - .066, hand[2] + .067),
-          (.081, .084, .058), 18)
-        t("Trouser thigh", thigh, "pants", hip, knee, (.167, .156), .14)
-        t("Trouser shin", shin, "pants", knee, foot, (.131, .142), .095)
-        l("Knee seam", shin, "trim", (knee[0], knee[1] - .099, knee[2]), (.10, .051, .077))
-        l("Boot upper", boot, "boots", (foot[0] + .035, foot[1], foot[2] + .09), (.168, .144, .20))
-        l("Boot toe", boot, "boots", (foot[0] + .125, foot[1], .134), (.25, .157, .126), 6)
-        l("Boot sole", boot, "dark", (foot[0] + .13, foot[1], .049), (.261, .159, .049))
-        l("Toe cap", boot, "trim", (foot[0] + .248, foot[1], .122), (.122, .146, .064), 10)
-        l("Boot buckle", boot, "metal", (foot[0] + .024, foot[1] - .127, .194), (.052, .039, .05))
 
-    x, y, z = joints["hand_far"]
-    bottom, top = (x + .07, y, z - .20), (x + .11, y, z + .245)
-    t("Mic body", "fist_far", "dark", bottom, top, (.06, .06), .02)
-    l("Mic grille", "fist_far", "metal", top, (.100, .095, .117), -12)
-    l("Mic grille band", "fist_far", "accent", (top[0] - .007, y, top[2] - .041),
-      (.103, .097, .036), -12)
+def merge_clay(sculpt, name, parts, color, bone=None, weights=None, voxel=.019):
+    """Bake a sculpted union with enough topology to deform at the joints."""
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in parts:
+        world = obj.matrix_world.copy()
+        obj.parent = None
+        obj.matrix_world = world
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = parts[0]
+    bpy.ops.object.join()
+    obj = bpy.context.object
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    obj.data.remesh_voxel_size = voxel
+    bpy.ops.object.voxel_remesh()
+    smooth = obj.modifiers.new("Finger-smoothed clay", "SMOOTH")
+    smooth.factor, smooth.iterations = .8, 4
+    bpy.ops.object.modifier_apply(modifier=smooth.name)
+    obj.data.materials.clear()
+    if weights is None:
+        return sculpt.bind(obj, name, bone, color)
+    obj.name = name
+    obj.data.materials.append(sculpt.colors[color])
+    for polygon in obj.data.polygons:
+        polygon.use_smooth = True
+    groups = {}
+    for vert in obj.data.vertices:
+        for joint, amount in weights(vert.co).items():
+            if amount <= 0:
+                continue
+            if joint not in groups:
+                groups[joint] = obj.vertex_groups.new(name=joint)
+            groups[joint].add([vert.index], amount, "REPLACE")
+    obj.parent = sculpt.rig
+    modifier = obj.modifiers.new("Puppet skin", "ARMATURE")
+    modifier.object = sculpt.rig
+    modifier.use_deform_preserve_volume = True
+    return obj
+
+
+def clay_line(sculpt, name, bone, color, points, radius):
+    """A tapered clay roll through sculpt control points."""
+    curve = bpy.data.curves.new(name, "CURVE")
+    curve.dimensions = "3D"
+    curve.resolution_u = 10
+    curve.bevel_depth = radius
+    curve.bevel_resolution = 3
+    curve.use_fill_caps = True
+    spline = curve.splines.new("BEZIER")
+    spline.bezier_points.add(len(points) - 1)
+    for point, (x, y, z, scale) in zip(spline.bezier_points, points):
+        point.co = (x, y, z)
+        point.radius = scale
+        point.handle_left_type = point.handle_right_type = "AUTO"
+    obj = bpy.data.objects.new(name, curve)
+    bpy.context.collection.objects.link(obj)
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.convert(target="MESH")
+    return sculpt.bind(bpy.context.object, name, bone, color)
+
+
+def clay_plate(sculpt, name, bone, color, outline, thickness, radius):
+    """A rounded appliqué with an explicit silhouette and thickness vector."""
+    border = list(map(Vector, outline))
+    depth = Vector(thickness)
+    winding = sum(point.cross(border[(i + 1) % len(border)]).dot(depth)
+                  for i, point in enumerate(border))
+    if winding < 0:
+        border.reverse()
+    count = len(border)
+    verts = [point - depth * .5 for point in border] + [point + depth * .5 for point in border]
+    faces = [tuple(reversed(range(count))), tuple(range(count, 2 * count))]
+    faces.extend((i, (i + 1) % count, (i + 1) % count + count, i + count)
+                 for i in range(count))
+    data = bpy.data.meshes.new(name)
+    data.from_pydata(verts, [], faces)
+    data.update()
+    obj = bpy.data.objects.new(name, data)
+    bpy.context.collection.objects.link(obj)
+    bevel = obj.modifiers.new("Rounded clay seam", "BEVEL")
+    bevel.width, bevel.segments = radius, 3
+    obj.modifiers.new("Soft panel normals", "WEIGHTED_NORMAL")
+    return sculpt.bind(obj, name, bone, color)
+
+
+def angled_face(sculpt, name, color, xyz, radii, tilt):
+    obj = sculpt.lump(name, "head", color, xyz, radii)
+    transform = obj.matrix_world.copy()
+    # Rotate around the center of the sculpted feature in world space.
+    center = transform.translation.copy()
+    obj.matrix_world = Matrix.Translation(center) @ Matrix.Rotation(radians(tilt), 4, "Z") @ Matrix.Translation(-center) @ transform
+    return obj
 
 
 def build_guitar(s):

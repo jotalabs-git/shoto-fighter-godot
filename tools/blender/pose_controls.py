@@ -1,5 +1,5 @@
 """Optional manual IK for the puppet. Baked actions keep using the deform bones."""
-from math import atan2, pi
+from math import pi
 
 import bpy
 from mathutils import Vector
@@ -11,17 +11,19 @@ IK_PROPERTIES = ("IK_hands", "IK_feet")
 
 
 def calibrate_pole(bone, constraint, pivot):
-    # Sample the solver's roll convention with the current pose and lengths.
-    samples = []
-    for angle in (0.0, pi / 2, pi):
+    # The solver can respond nonlinearly when the authored pose scales a limb.
+    def error(angle):
+        angle = (angle + pi) % (2 * pi) - pi
         constraint.pole_angle = angle
         bpy.context.view_layer.update()
-        samples.append(bone.head.copy())
-    center = (samples[0] + samples[2]) * .5
-    radial = samples[0] - center
-    tangent = samples[1] - center
-    offset = pivot - center
-    constraint.pole_angle = atan2(offset.dot(tangent), offset.dot(radial))
+        return (bone.head - pivot).length_squared
+
+    step = pi / 8
+    angle = min((index * step for index in range(-8, 8)), key=error)
+    for _ in range(6):
+        step *= .5
+        angle = min((angle - step, angle, angle + step), key=error)
+    constraint.pole_angle = (angle + pi) % (2 * pi) - pi
 
 
 def add_ik(rig):
@@ -45,7 +47,7 @@ def add_ik(rig):
                 anchor.head = point
                 anchor.tail = point + Vector((0, 0, .12))
                 anchor.use_deform = False
-            chains.append((kind, f"{end_bone}_{side}", target_name, pole_name, pivot))
+            chains.append((kind, f"{end_bone}_{side}", target_name, pole_name))
     bpy.ops.object.mode_set(mode="OBJECT")
     bpy.context.view_layer.update()
     collection = rig.data.collections.new("Manual IK")
@@ -54,7 +56,7 @@ def add_ik(rig):
         rig.id_properties_ui(property_name).update(
             min=0.0, max=1.0,
             description="En 1, mover los controles IK y los polos. En 0, usar las acciones del juego.")
-    for kind, owner, target, pole, pivot in chains:
+    for kind, owner, target, pole in chains:
         for name, palette in ((target, "THEME04"), (pole, "THEME03")):
             bone = rig.data.bones[name]
             for group in list(bone.collections):
@@ -69,7 +71,6 @@ def add_ik(rig):
         constraint.chain_count = 2
         constraint.use_stretch = False
 
-        calibrate_pole(rig.pose.bones[owner], constraint, pivot)
         constraint.influence = 0
         driver = constraint.driver_add("influence").driver
         driver.type = "AVERAGE"

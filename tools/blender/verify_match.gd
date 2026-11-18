@@ -68,24 +68,21 @@ func _verify() -> void:
 				"No finalizó la ronda contra CPU"):
 			return
 	else:
+		var start_x := first.position.x
 		Input.action_press("p1_right")
 		await _ticks(12)
-		if not _require(first.sprite.animation == "walk_fwd" and first.position.x > 150.0,
+		Input.action_release("p1_right")
+		if not _require(first.sprite.animation == "walk_fwd" and first.position.x > start_x + 20.0,
 				"P1 no caminó con su animación"):
 			return
-		Input.action_press("p2_left")
-		await _ticks(9)
-		Input.action_release("p1_right")
-		Input.action_release("p2_left")
-		await _ticks(3)
+		if not await _approach(arena, ["p1_right", "p2_left"]):
+			return
 		if not await _jab(first, second, "p1_lp", "jab"):
 			return
 		await _ticks(35)
 		# The first hit applies pushback. Close the distance again before P2 attacks.
-		Input.action_press("p2_left")
-		await _ticks(12)
-		Input.action_release("p2_left")
-		await _ticks(2)
+		if not await _approach(arena, ["p2_left"]):
+			return
 		if not await _jab(second, first, "p2_lp", "reaccion"):
 			return
 		if args.has("--match") and not await _play_match(arena):
@@ -95,6 +92,19 @@ func _verify() -> void:
 	await process_frame
 	await process_frame
 	quit()
+
+func _approach(arena: MatchManager, actions: Array[String]) -> bool:
+	for action in actions:
+		Input.action_press(action)
+	for tick in 55:
+		if arena.p2.position.x - arena.p1.position.x <= arena.pushbox_min_sep + 1.0:
+			break
+		await physics_frame
+	for action in actions:
+		Input.action_release(action)
+	await _ticks(3)
+	return _require(arena.p2.position.x - arena.p1.position.x <= arena.pushbox_min_sep + 3.0,
+		"Los luchadores no se acercaron al rango del jab")
 
 func _jab(attacker: Fighter, defender: Fighter, action: String, screenshot: String) -> bool:
 	var hp := defender.health

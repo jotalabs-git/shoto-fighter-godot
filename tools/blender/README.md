@@ -58,9 +58,9 @@ Los efectos, hitboxes y tiempos lógicos pertenecen al motor de combate.
 
 ## Revisión
 
-### Posar el Guitarrista en Blender
+### Posar los personajes en Blender
 
-La fuente del Guitarrista se abre en Pose Mode. En **Object Properties →
+Las fuentes del Guitarrista y el Frontman se abren en Pose Mode. En **Object Properties →
 Custom Properties** del objeto `Rig`, poné `IK_hands` o `IK_feet` en 1 para
 posar brazos o piernas. En la vista 3D, mové los controles azules para
 colocar manos y pies. Los verdes orientan codos y rodillas. La chaqueta y

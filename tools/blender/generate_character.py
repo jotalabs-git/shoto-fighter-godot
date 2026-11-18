@@ -9,8 +9,8 @@ from mathutils import Matrix, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import REFERENCE, SOURCES, SPEC, blender_args, read_json
+from frontman import build_frontman
 from guitarist import build_guitarist
-from model import build_frontman
 from pose_controls import add_ik, align_ik_to_idle, pose_view
 from poses import BONES, STANCE, actions, joint_positions, points
 
@@ -156,29 +156,23 @@ def generate(args):
     settings = read_json(SPEC)
     character = settings["characters"][args.character]
     rig = make_rig()
-    guitarist = args.character == "guitarist"
-    if guitarist:
+    if args.character == "guitarist":
         build_guitarist(rig, character["palette"])
-        add_ik(rig)
     else:
         build_frontman(rig, character["palette"])
+    add_ik(rig)
     stage(settings["camera"])
     add_actions(rig, args.character, args.full, settings["attack_phases"])
-    if guitarist:
-        align_ik_to_idle(rig)
+    align_ik_to_idle(rig)
     bpy.ops.object.select_all(action="DESELECT")
     rig.select_set(True)
     bpy.context.view_layer.objects.active = rig
     for screen in bpy.data.screens:
         for area in screen.areas:
             if area.type == "VIEW_3D":
-                if guitarist:
-                    pose_view(area)
-                else:
-                    area.spaces.active.region_3d.view_perspective = "CAMERA"
-    if guitarist:
-        bpy.ops.object.mode_set(mode="POSE")
-        bpy.ops.pose.select_all(action="DESELECT")
+                pose_view(area)
+    bpy.ops.object.mode_set(mode="POSE")
+    bpy.ops.pose.select_all(action="DESELECT")
     SOURCES.mkdir(parents=True, exist_ok=True)
     bpy.context.preferences.filepaths.save_version = 0
     bpy.ops.wm.save_as_mainfile(filepath=str(SOURCES / f"{args.character}.blend"), compress=True)

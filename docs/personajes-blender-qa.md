@@ -223,3 +223,43 @@ El validador aprobó 113 PNG en 26 acciones y `scripts/check-linux.sh`
 aprobó las 103 pruebas. El smoke gráfico final a 384 × 216 verificó
 caminata, jab, hitstop y reacción. La comparación final está en
 `guitarist-style/comparativa-384.png` (antes a la izquierda).
+
+### Vestuario · Campera roquera de los años 50
+
+El vestuario combina una campera de cuero con solapas, cierre diagonal y
+herrajes plateados, remera blanca, jean celeste con botamangas y botas
+tejanas de cuero con taco y costura. La campera toma como referencia los
+detalles de la [Perfecto del Museo del FIT](https://exhibitions.fitnyc.edu/biker-jackets/2014/02/24/schott-perfecto-jacket/).
+
+El torso, la remera y el frente de la campera siguen a la pelvis. Cada
+manga reparte sus pesos entre la pelvis, el brazo y el antebrazo de su
+lado. Esto corrige el arrastre del torso al levantar el brazo. Blender
+comprobó el anclaje en 78 muestras de las 26 acciones y verificó las
+cuatro cadenas IK.
+
+Se reexportaron y validaron 113 PNG. La suite de Godot aprobó 103 pruebas
+y el smoke gráfico confirmó caminata, jab, hitstop y reacción.
+Las vistas y los registros están en `reports/character-art/guitarist-ropa-50s/`.
+
+## Rediseño del Frontman · Cantante articulado
+
+- Escultura de cara y cresta completa, torso desnudo, bermudas cargo 3/4 y
+  borcegos negros con cordones. El torso sigue a la pelvis. Cada brazo
+  tiene sus propios pesos de hombro y codo. La entrepierna de las bermudas
+  conserva el anclaje a la cadera y mezcla los pesos de ambas piernas.
+- El micrófono va en la mano trasera. Su chicote modelado termina en tres
+  conductores con puntas de cobre expuesto. Se revisó el detalle y la
+  lectura en `idle`, guardia, golpes, especiales y caída.
+- La fuente abre en Pose Mode con 15 huesos y ocho controles. Se
+  verificaron las cuatro cadenas IK desde la guardia. Después de recalibrar
+  los polos se reexportaron 12 PNG de guardia, jab y caída, idénticos a
+  los del export completo. Se validaron 113 PNG por luchador.
+- Los mosaicos, el detalle del micrófono y los logs de Blender y Godot
+  están en `reports/character-art/frontman-redesign/`.
+
+La verificación sobre una copia limpia con el escenario ampliado aprobó
+104 pruebas de Godot, un intercambio en modo local y una ronda completa
+contra CPU. Las tres tipografías versionadas pasaron la validación de
+proveniencia y cargaron en Godot. La primera importación se cerró con
+los TTF en paralelo. La repetición pasó con importación secuencial en
+un perfil temporal del editor.

@@ -16,16 +16,16 @@
       "label": "El Guitarrista",
       "palette": {
         "skin": "ca8559", "hair": "211428", "hair_light": "523154",
-        "jacket": "38244e", "trim": "9360e8", "accent": "58d8fb",
-        "pants": "202638", "boots": "2d2341", "metal": "e7b871"
+        "jacket": "302b34", "trim": "9360e8", "accent": "58d8fb",
+        "pants": "81a9d0", "boots": "915932", "metal": "e7b871"
       }
     },
     "frontman": {
       "label": "El Frontman",
       "palette": {
         "skin": "ce7853", "hair": "38152a", "hair_light": "af3261",
-        "jacket": "da4b52", "trim": "ff8472", "accent": "fadcc1",
-        "pants": "2d1a34", "boots": "422036", "metal": "edc6a4"
+        "trim": "ff8472", "accent": "59bfd0",
+        "pants": "676c51", "boots": "2c2730", "metal": "d7c8c8"
       }
     }
   }

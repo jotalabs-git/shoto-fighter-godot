@@ -4,7 +4,7 @@ from math import cos, radians, sin
 import bpy
 from mathutils import Matrix, Vector
 
-from model import Sculpt, build_guitar, clay
+from model import Sculpt, angled_face, blend, build_guitar, clay, clay_line, clay_plate, merge_clay
 from poses import STANCE, joint_positions
 
 
@@ -12,80 +12,35 @@ HEAD = "head"
 BODY = "pelvis"
 
 
-def blend(value, start, end):
-    t = min(1.0, max(0.0, (value - start) / (end - start)))
-    return t * t * (3.0 - 2.0 * t)
-
-
-def merge_clay(sculpt, name, parts, color, bone=None, weights=None, voxel=.019):
-    """Bake a sculpted union with enough topology to deform at the joints."""
-    bpy.ops.object.select_all(action="DESELECT")
-    for obj in parts:
-        world = obj.matrix_world.copy()
-        obj.parent = None
-        obj.matrix_world = world
-        obj.select_set(True)
-    bpy.context.view_layer.objects.active = parts[0]
-    bpy.ops.object.join()
-    obj = bpy.context.object
-    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-    obj.data.remesh_voxel_size = voxel
-    bpy.ops.object.voxel_remesh()
-    smooth = obj.modifiers.new("Finger-smoothed clay", "SMOOTH")
-    smooth.factor, smooth.iterations = .8, 4
-    bpy.ops.object.modifier_apply(modifier=smooth.name)
-    obj.data.materials.clear()
-    if weights is None:
-        return sculpt.bind(obj, name, bone, color)
-    obj.name = name
-    obj.data.materials.append(sculpt.colors[color])
-    for polygon in obj.data.polygons:
-        polygon.use_smooth = True
-    groups = {}
-    for vert in obj.data.vertices:
-        for joint, amount in weights(vert.co).items():
-            if amount <= 0:
-                continue
-            if joint not in groups:
-                groups[joint] = obj.vertex_groups.new(name=joint)
-            groups[joint].add([vert.index], amount, "REPLACE")
-    obj.parent = sculpt.rig
-    modifier = obj.modifiers.new("Puppet skin", "ARMATURE")
-    modifier.object = sculpt.rig
-    modifier.use_deform_preserve_volume = True
-    return obj
-
-
-def clay_line(sculpt, name, bone, color, points, radius):
-    """A tapered clay roll through sculpt control points."""
-    curve = bpy.data.curves.new(name, "CURVE")
-    curve.dimensions = "3D"
-    curve.resolution_u = 10
-    curve.bevel_depth = radius
-    curve.bevel_resolution = 3
-    curve.use_fill_caps = True
-    spline = curve.splines.new("BEZIER")
-    spline.bezier_points.add(len(points) - 1)
-    for point, (x, y, z, scale) in zip(spline.bezier_points, points):
-        point.co = (x, y, z)
-        point.radius = scale
-        point.handle_left_type = point.handle_right_type = "AUTO"
-    obj = bpy.data.objects.new(name, curve)
-    bpy.context.collection.objects.link(obj)
-    bpy.ops.object.select_all(action="DESELECT")
-    obj.select_set(True)
-    bpy.context.view_layer.objects.active = obj
-    bpy.ops.object.convert(target="MESH")
-    return sculpt.bind(bpy.context.object, name, bone, color)
-
-
-def angled_face(sculpt, name, color, xyz, radii, tilt):
-    obj = sculpt.lump(name, HEAD, color, xyz, radii)
-    transform = obj.matrix_world.copy()
-    # Rotate around the center of the sculpted feature in world space.
-    center = transform.translation.copy()
-    obj.matrix_world = Matrix.Translation(center) @ Matrix.Rotation(radians(tilt), 4, "Z") @ Matrix.Translation(-center) @ transform
-    return obj
+def shirt_panel(s, surface):
+    # Sample the chest across the full garment so the cotton follows its
+    # curvature between the shoulders, collar and waist.
+    rows = [
+        (2.006, 0, .109, .025),
+        (1.962, -.006, .153, .004),
+        (1.868, -.017, .149, 0),
+        (1.741, -.024, .132, 0),
+        (1.602, -.022, .118, 0),
+        (1.493, -.015, .103, 0),
+        (1.436, 0, .071, 0),
+    ]
+    columns = 9
+    across = [i / 4 - 1 for i in range(columns)]
+    verts = surface([(center + width * u, z + scoop * u * u)
+                     for z, center, width, scoop in rows for u in across], .034)
+    faces = []
+    for row in range(len(rows) - 1):
+        for col in range(columns - 1):
+            i = row * columns + col
+            faces.append((i, i + columns, i + columns + 1, i + 1))
+    mesh = bpy.data.meshes.new("White crew-neck cotton")
+    mesh.from_pydata(verts, [], faces)
+    mesh.update()
+    shirt = bpy.data.objects.new("White crew-neck T-shirt", mesh)
+    bpy.context.collection.objects.link(shirt)
+    solid = shirt.modifiers.new("Cotton edge", "SOLIDIFY")
+    solid.thickness = .022
+    return s.bind(shirt, "White crew-neck T-shirt", BODY, "shirt")
 
 
 def face(s):
@@ -213,48 +168,119 @@ def boxing_glove(s, bone, side, wrist):
     ], .009)
 
 
+def western_boot(s, bone, side, foot):
+    x, y, _ = foot
+    outer = -1 if side == "near" else 1
+    l = s.lump
+    merge_clay(s, f"Western boot · {side}", [
+        l("Western shaft", bone, "boots", (x - .022, y, .300), (.150, .150, .189), 7),
+        l("Leather instep", bone, "boots", (x + .112, y, .158), (.217, .139, .115), 16),
+        l("Tapered leather toe", bone, "boots", (x + .242, y, .114), (.148, .105, .076), 5),
+    ], "boots", bone, voxel=.010)
+    clay_plate(s, "Western sole", bone, "sole", [
+        (x + dx, y + dy, z) for dx, dy, z in [
+            (-.149, -.100, .085), (-.073, -.148, .084), (.157, -.130, .049),
+            (.313, -.092, .045), (.394, -.021, .047), (.394, .021, .047),
+            (.310, .093, .045), (.154, .132, .049), (-.078, .146, .084),
+            (-.149, .100, .085),
+        ]
+    ], (0, 0, .048), .017)
+    clay_plate(s, "Stacked western heel", bone, "sole", [
+        (x + dx, y + dy, .049)
+        for dx, dy in [(-.143, -.096), (-.069, -.140), (.021, -.120), (.029, .120),
+                       (-.069, .140), (-.143, .096)]
+    ], (0, 0, .096), .018)
+    clay_line(s, "Western boot embroidery", bone, "boot_thread", [
+        (x - .094, y + outer * .130, .379, .4),
+        (x - .049, y + outer * .150, .317, .85),
+        (x + .004, y + outer * .152, .264, 1),
+        (x + .067, y + outer * .131, .346, .47),
+    ], .011)
+    l("Western pull tab", bone, "boot_thread", (x - .044, y + outer * .101, .447),
+      (.035, .024, .037))
+
+
+def jacket_details(s, coat):
+    bpy.context.view_layer.update()
+    local = coat.matrix_world.inverted()
+    direction = local.to_3x3() @ Vector((-1, 0, 0))
+
+    def panel(points, lift):
+        result = []
+        for y, z in points:
+            ray = local @ Vector((.8, y, z))
+            hit, point, _, _ = coat.ray_cast(ray, direction)
+            if not hit:
+                raise ValueError(f"Jacket front missing at {y}, {z}")
+            result.append(((coat.matrix_world @ point).x + lift, y, z))
+        return result
+
+    # Keep the shirt and its facing on the torso with the zipper and lapels.
+    shirt_panel(s, panel)
+    for name, points in (
+        ("Wide notched lapel", [(-.164, 2.015), (-.229, 1.913), (-.154, 1.901),
+                                (-.225, 1.866), (-.090, 1.655), (-.080, 1.838)]),
+        ("Short notched lapel", [(.155, 2.025), (.202, 1.932), (.146, 1.913),
+                                 (.208, 1.876), (.116, 1.750), (.081, 1.929)]),
+    ):
+        clay_plate(s, name, BODY, "jacket_edge", panel(points, .054), (.047, 0, 0), .013)
+    for y, z in ((-.168, 1.870), (.172, 1.885), (-.209, 1.957), (.168, 1.972)):
+        (snap,) = panel([(y, z)], .086)
+        s.lump("Silver lapel snap", BODY, "nickel", snap, (.013, .022, .022))
+    for name, points in (
+        ("Diagonal front zipper", [(.091, 1.470), (.071, 1.553), (-.026, 1.711), (-.094, 1.805)]),
+        ("Slash chest pocket", [(-.230, 1.674), (-.202, 1.613), (-.169, 1.574)]),
+    ):
+        coords = panel(points, .061)
+        clay_line(s, name, BODY, "nickel", [(*point, .8) for point in coords], .014)
+        s.lump("Zipper pull", BODY, "nickel", coords[-1], (.018, .021, .032), 19)
+    s.lump("Jacket waist belt", BODY, "dark", (-.022, 0, 1.429), (.245, .317, .047))
+    s.lump("Silver jacket buckle", BODY, "nickel", (.229, .01, 1.425), (.036, .056, .045))
+
+
 def body(s):
     l, t = s.lump, s.tube
     rest = joint_positions(STANCE)
-    jacket = [
+    coat = merge_clay(s, "Biker jacket · torso", [
         l("Chest", BODY, "jacket", (-.007, 0, 1.722), (.278, .391, .369), -8),
         l("Cropped jacket hem", BODY, "jacket", (-.026, 0, 1.491), (.242, .313, .127), -8),
-    ]
+    ], "jacket", BODY)
+    jacket_details(s, coat)
     pants = [l("Hip volume", BODY, "pants", (-.069, 0, 1.251), (.222, .313, .224))]
     for side, sign in (("near", -1), ("far", 1)):
         shoulder, elbow, hand = (rest[f"{key}_{side}"] for key in ("shoulder", "elbow", "hand"))
         hip, knee, foot = (rest[f"{key}_{side}"] for key in ("hips", "knee", "foot"))
         upper, lower, fist, thigh, shin, boot = (
             f"{key}_{side}" for key in ("bicep", "forearm", "fist", "thigh", "shin", "boot"))
-        jacket.extend([
-            t("Upper sleeve", upper, "jacket", shoulder, elbow, (.160, .165), .14),
-            l("Sleeve bend", lower, "jacket", elbow, (.129, .130, .133)),
-            t("Lower sleeve", lower, "jacket", elbow, hand, (.116, .122), .07),
-        ])
+        shoulder, elbow, hand = map(Vector, (shoulder, elbow, hand))
+        upper_axis = (elbow - shoulder).normalized()
+        forearm_axis = (hand - elbow).normalized()
+        bend_axis = (upper_axis + forearm_axis).normalized()
+
+        def sleeve_weights(v):
+            arm = blend((v - shoulder).dot(upper_axis), -.09, .125)
+            forearm = blend((v - elbow).dot(bend_axis), -.105, .095)
+            return {BODY: 1 - arm, upper: arm * (1 - forearm), lower: arm * forearm}
+
+        merge_clay(s, f"Biker jacket · sleeve {side}", [
+            t("Upper sleeve", upper, "jacket", shoulder, elbow, (.142, .145), .107),
+            l("Sleeve bend", lower, "jacket", elbow, (.111, .115, .117)),
+            t("Lower sleeve", lower, "jacket", elbow, hand, (.112, .117), .066),
+        ], "jacket", weights=sleeve_weights)
+        t("Zipped leather cuff", lower, "jacket_edge", hand.lerp(elbow, .23),
+          hand.lerp(elbow, .10), (.113, .115), .022)
+        snap = hand.lerp(elbow, .17) + Vector((0, sign * .108, 0))
+        l("Cuff snap", lower, "nickel", snap, (.020, .014, .020))
+        cuff = Vector(foot).lerp(Vector(knee), .37)
         pants.extend([
             t("Trouser thigh", thigh, "pants", hip, knee, (.165, .159), .16),
-            l("Knee sculpt", shin, "pants", knee, (.141, .133, .141)),
-            t("Trouser shin", shin, "pants", knee, foot, (.123, .133), .09),
+            l("Knee sculpt", shin, "pants", knee, (.144, .137, .141)),
+            t("Trouser shin", shin, "pants", knee, cuff, (.124, .134), .052),
         ])
+        t("Turned denim cuff", shin, "denim_edge", cuff, cuff.lerp(Vector(knee), .19),
+          (.128, .136), .026)
         boxing_glove(s, fist, side, hand)
-        x, y, _ = foot
-        merge_clay(s, f"Boot · {side}", [
-            l("Boot ankle", boot, "boots", (x + .015, y, .246), (.154, .147, .201), -8),
-            l("Boot toe", boot, "boots", (x + .127, y, .152), (.245, .150, .125)),
-        ], "boots", boot, voxel=.013)
-        l("Boot sole", boot, "dark", (x + .122, y, .047), (.251, .161, .047))
-        l("Toe cap", boot, "trim", (x + .237, y, .143), (.128, .143, .073))
-        l("Boot buckle", boot, "metal", (x + .060, y + sign * .140, .199), (.055, .018, .051))
-
-    def coat_weights(v):
-        side = "near" if v.y < 0 else "far"
-        arm = max(blend(abs(v.y), .257, .390), blend(v.x, .243, .361))
-        elbow = Vector(rest[f"elbow_{side}"])
-        hand = Vector(rest[f"hand_{side}"])
-        shoulder = Vector(rest[f"shoulder_{side}"])
-        along_arm = ((elbow - shoulder).normalized() + (hand - elbow).normalized()).normalized()
-        forearm = blend((v - elbow).dot(along_arm), -.118, .104)
-        return {BODY: 1 - arm, f"bicep_{side}": arm * (1 - forearm), f"forearm_{side}": arm * forearm}
+        western_boot(s, boot, side, foot)
 
     def trouser_weights(v):
         side = "near" if v.y < 0 else "far"
@@ -262,29 +288,7 @@ def body(s):
         shin = 1 - blend(v.z, .59, .83)
         return {BODY: 1 - leg, f"thigh_{side}": leg * (1 - shin), f"shin_{side}": leg * shin}
 
-    merge_clay(s, "Jacket · weighted continuous mesh", jacket, "jacket", weights=coat_weights)
     merge_clay(s, "Trousers · weighted continuous mesh", pants, "pants", weights=trouser_weights)
-    l("Shirt under cropped jacket", BODY, "dark", (.234, 0, 1.532), (.048, .157, .210), -9)
-    l("Belt", BODY, "dark", (-.022, 0, 1.314), (.223, .322, .036))
-    l("Buckle", BODY, "metal", (.204, 0, 1.309), (.038, .070, .052))
-    clay_line(s, "Folded leather lapel", BODY, "jacket_edge", [
-        (.116, -.151, 2.028, .48), (.218, -.142, 1.901, 1),
-        (.266, -.069, 1.798, .83), (.259, .012, 1.723, .24),
-    ], .039)
-    clay_line(s, "Diagonal jacket zip", BODY, "metal", [
-        (.194, .094, 1.458, .31), (.248, .048, 1.562, .88),
-        (.276, -.026, 1.704, 1), (.272, -.095, 1.789, .76),
-    ], .014)
-    l("Zip pull", BODY, "metal", (.282, -.093, 1.780), (.017, .021, .038), 25)
-    arm = "bicep_near"
-    l("Padded violet shoulder", arm, "shoulder", (.009, -.384, 1.874),
-      (.200, .118, .122), -16)
-    clay_line(s, "Shoulder pad edge", arm, "jacket_edge", [
-        (-.146, -.410, 1.879, .18), (-.061, -.482, 1.904, .87),
-        (.058, -.484, 1.913, 1), (.175, -.425, 1.932, .30),
-    ], .022)
-    for x in (-.078, .064):
-        l("Shoulder rivet", arm, "metal", (x, -.479, 1.859), (.025, .017, .023))
 
 
 def mount_guitar(s):
@@ -322,14 +326,18 @@ def mount_guitar(s):
 
 
 def build_guitarist(rig, colors):
-    puppet = Sculpt(rig, {**colors, "jacket": "393445"})
+    puppet = Sculpt(rig, colors)
     puppet.colors["iris"] = clay("Umber iris", "6e483a")
     puppet.colors["glove"] = clay("Plum boxing leather", "aa375f")
     puppet.colors["glove_wrap"] = clay("Black boxing wrap", "342337")
     puppet.colors["glove_stitch"] = clay("Wrist stitching", "c988a9")
     puppet.colors["harness"] = clay("Worn harness leather", "413049")
-    puppet.colors["shoulder"] = clay("Violet shoulder pad", "8151ba")
-    puppet.colors["jacket_edge"] = clay("Worn violet piping", "655274")
+    puppet.colors["jacket_edge"] = clay("Folded black leather", "423845")
+    puppet.colors["shirt"] = clay("White crew-neck cotton", "f3eee4")
+    puppet.colors["nickel"] = clay("Dull silver jacket hardware", "c6bec3", metallic=.33)
+    puppet.colors["denim_edge"] = clay("Turned light denim", "aac1d4")
+    puppet.colors["boot_thread"] = clay("Western saddle stitching", "c38757")
+    puppet.colors["sole"] = clay("Stacked leather sole", "483036")
     for material in puppet.colors.values():
         shader = material.node_tree.nodes.get("Principled BSDF")
         shader.inputs["Roughness"].default_value = .81
@@ -337,7 +345,9 @@ def build_guitarist(rig, colors):
         bump.inputs["Strength"].default_value = .105
         bump.inputs["Distance"].default_value = .027
     add_thumbprint(puppet.colors["glove"])
-    add_thumbprint(puppet.colors["shoulder"])
+    for name in ("jacket", "jacket_edge"):
+        shader = puppet.colors[name].node_tree.nodes.get("Principled BSDF")
+        shader.inputs["Roughness"].default_value = .66
     body(puppet)
     face(puppet)
     hair(puppet)

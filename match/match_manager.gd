@@ -91,15 +91,15 @@ func _physics_process(delta: float) -> void:
 	# Agarres y golpes durante intro/pelea
 	if can_act:
 		Throws.resolve(p1, p2, throw_range)
+		if Combat.resolve(p1, p2):
+			_on_hit(p2)
+		if Combat.resolve(p2, p1):
+			_on_hit(p1)
 	# Solo un agarre efectivo inicia la toma; throw tech nunca entra a Throw.
 	var throwing := _is_throwing()
 	if throwing and not _throw_was_active:
 		_throw_closeup_remaining = throw_closeup_frames
 	_throw_was_active = throwing
-	if Combat.resolve(p1, p2):
-			_on_hit(p2)
-		if Combat.resolve(p2, p1):
-			_on_hit(p1)
 	# Proyectiles
 	_process_projectiles(delta)
 	# Cámara

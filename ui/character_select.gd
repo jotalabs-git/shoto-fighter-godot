@@ -142,6 +142,21 @@ func _add_preview(side: int, at: Vector2) -> void:
 			light.rotation_degrees = Vector3(-20, 120, 0)
 		vp.add_child(light)
 
+	# Base discreta tipo escenario de recital, solo en la vista previa.
+	var pedestal := MeshInstance3D.new()
+	var cylinder := CylinderMesh.new()
+	cylinder.top_radius = 0.89
+	cylinder.bottom_radius = 0.96
+	cylinder.height = 0.16
+	pedestal.mesh = cylinder
+	pedestal.position = Vector3(0.0, -0.13, 0.0)
+	var pedestal_material := StandardMaterial3D.new()
+	pedestal_material.albedo_color = Color("#252238")
+	pedestal_material.metallic = 0.24
+	pedestal_material.roughness = 0.42
+	pedestal.material_override = pedestal_material
+	vp.add_child(pedestal)
+
 func _label(value: String, pos: Vector2, dimensions: Vector2, font_size: int, color: Color, horizontal: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT, font_role: String = "ui") -> Label:
 	var label := Label.new()
 	label.text = value

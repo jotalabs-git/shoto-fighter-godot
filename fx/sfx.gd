@@ -72,7 +72,7 @@ func _play(key: String, volume: float = 0.0) -> void:
 	var variant_key := key
 	# Alterna fuentes Kenney / Independent.nu / Sonniss cuando estén instaladas.
 	var choices: Array[String] = [key]
-	for suffix in ["_oga", "_sonniss"]:
+	for suffix in ["_oga", "_kenney", "_sonniss"]:
 		if _bank.has(key + suffix):
 			choices.append(key + suffix)
 	if choices.size() > 1:
@@ -134,7 +134,7 @@ func _register(key: String, frequency: float, duration: float, noise: float, wei
 		_bank[key] = stream
 	else:
 		_bank[key] = _synthesize(frequency, duration, noise, weight, seed, voiced)
-	for suffix in ["_oga", "_sonniss"]:
+	for suffix in ["_oga", "_kenney", "_sonniss"]:
 		var alternative := _load_audio(key + suffix)
 		if alternative != null:
 			_bank[key + suffix] = alternative

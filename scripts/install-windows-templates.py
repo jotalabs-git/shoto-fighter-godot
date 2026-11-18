@@ -27,7 +27,6 @@ def parse_version(raw: str) -> tuple[str, str]:
     if not match:
         raise ValueError(f"No se reconoce la versión de Godot: {raw!r}")
     directory = match.group(1)
-    release = directory.replace(".", "-", 1)  # placeholder; normalized below
     version, channel = directory.rsplit(".", 1)
     return directory, f"{version}-{channel}"
 

@@ -26,3 +26,28 @@ static func button_style(focused: bool = false) -> StyleBoxFlat:
 	style.content_margin_top = 3.0
 	style.content_margin_bottom = 3.0
 	return style
+
+## Las fuentes son opcionales hasta ejecutar scripts/install_fonts.py.
+## El fallback nativo permite abrir el proyecto aun sin descargar binarios.
+static var _font_cache: Dictionary = {}
+
+static func font_file(role: String) -> Font:
+	var filename := ""
+	match role:
+		"display":
+			filename = "MetalMania-Regular.ttf"
+		"impact":
+			filename = "Bangers-Regular.ttf"
+		"ui":
+			filename = "Oxanium-Variable.ttf"
+		_:
+			return null
+	var path := "res://assets/fonts/" + filename
+	if _font_cache.has(path):
+		return _font_cache[path]
+	if not ResourceLoader.exists(path):
+		return null
+	var loaded := load(path) as Font
+	if loaded != null:
+		_font_cache[path] = loaded
+	return loaded

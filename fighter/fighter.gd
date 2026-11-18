@@ -108,10 +108,10 @@ func _ready() -> void:
 				break
 	state_machine.setup(self)
 
-# Mantener el tamaño heredado de KFM; los personajes Blender se exportan calibrados
-# para 1:1 y no deben perder detalle con una reducción adicional de 0.85.
+# Escala visual uniforme para sprites originales y personajes Blender.
+# No altera hitboxes ni reglas de combate.
 const LEGACY_SPRITE_SCALE := 0.85
-const CUSTOM_SPRITE_SCALE := 1.0
+const CUSTOM_SPRITE_SCALE := 0.85
 const ATTACK_ANIM := {
 	"st.lp": "stand_lp", "st.mp": "stand_mp", "st.hp": "stand_hp",
 	"st.lk": "stand_lk", "st.mk": "stand_mk", "st.hk": "stand_hk",

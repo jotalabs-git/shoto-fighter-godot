@@ -27,6 +27,7 @@ def make_rig():
         bone.head, bone.tail = points(rest, name)
         if parent:
             bone.parent = armature.edit_bones[parent]
+            bone.inherit_scale = "NONE"
     bpy.ops.object.mode_set(mode="OBJECT")
     bpy.context.view_layer.update()
     return rig

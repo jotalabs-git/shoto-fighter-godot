@@ -68,3 +68,22 @@ Los comandos de reproducción están en [tools/blender/README.md](../tools/blend
 - Se completó una ronda contra CPU en el smoke headless con `--cpu --slice
   --round`. P1 ganó con 400 de vida, P2 terminó en 0. La corrida gráfica
   produjo una captura del primer intercambio en `g3-cpu/cpu-contacto.png`.
+
+## G4 · Frontman
+
+- `tools/blender/run.sh generate frontman` y `render frontman --actions
+  idle stand_lp hurt` produjeron 11 PNG en 1,7 s. Se revisó el mosaico
+  `g4-preview.png` y se comprobó la carga de ambos sets independientes
+  en la escena real con `verify_match.gd`.
+- La primera exportación completa rechazó un cuadro del puñetazo medio
+  y cuatro cuadros de caída o recuperación. Se desactivó la herencia de
+  escala entre huesos y se compensó el volumen del peinado en la caída.
+  El render completo siguiente exportó las 26 acciones en 16,1 s.
+- El validador aprobó **113 PNG por luchador**. El mosaico
+  `g4-catalogo.png` muestra el set del Frontman con cresta, chaqueta coral
+  y micrófono. Se inspeccionaron escala, reflejo, guardia y golpes en
+  `g4-match/`.
+- El smoke de dos jugadores verificó movimiento, pose activa y daño en
+  ambas direcciones. La ronda headless vs CPU terminó en KO con
+  P1 en 400 de vida y P2 en 0. Los avisos del smoke incluían V-Sync
+  bajo Xvfb y objetos WAV al cerrar la corrida acelerada.

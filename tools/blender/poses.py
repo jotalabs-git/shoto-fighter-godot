@@ -98,7 +98,7 @@ def punch(startup, active, recovery, x, z, base, windup=.2, reach_far=False):
 
 def kick(startup, active, recovery, x, z, base):
     chamber = dict(base, knee_near=(.63, -.23, z + .22), foot_near=(.14, -.23, z - .15),
-                   hand_near=(.41, -.56, 1.93))
+                   hand_near=(.41, -.56, base["neck"][2] - .05))
     hit = dict(base, neck=(-.24, 0, base["neck"][2]), head=(-.40, 0, base["head"][2]),
                knee_near=(x * .54, -.22, (z + base["hips"][2]) / 2),
                foot_near=(x, -.22, z), boot_near=(.32, 0, .08 if z > .7 else .02))
@@ -106,7 +106,7 @@ def kick(startup, active, recovery, x, z, base):
     return [(startup, chamber), (active, hit), (3, chamber), (3, settle), (recovery - 6, base)]
 
 
-def fallen():
+def fallen(vocalist):
     pose = {
         "hips": (-.35, 0, .37), "neck": (-.94, 0, .40), "head": (-1.52, 0, .43),
         "shoulder_near": (-.88, -.31, .41), "elbow_near": (-.52, -.49, .29),
@@ -121,6 +121,9 @@ def fallen():
     result = shifted({key: point for key, point in pose.items() if key != "boot_near"}, .29)
     result["foot_near"] = pose["foot_near"]
     result["boot_near"] = pose["boot_near"]
+    if vocalist:
+        result = {key: (x + .21, y, z) if key != "boot_near" else (x, y, z)
+                  for key, (x, y, z) in result.items()}
     return result
 
 
@@ -148,7 +151,7 @@ def actions(character, full):
                 hand_near=(.53, -.52, 2.00))
     guard = dict(base, elbow_near=(.46, -.52, 1.50), hand_near=(.66, -.50, 2.06),
                  elbow_far=(.47, .27, 1.56), hand_far=(.65, .22, 2.23))
-    down = fallen()
+    down = fallen(vocalist)
     result.update({
         "walk_back": list(reversed(cycle(base, 8, 3, .53))),
         "run": cycle(base, 6, 3, .77, run=True),

@@ -5,7 +5,7 @@ extends Control
 const MODEL_EXTENSIONS := ["glb", "gltf", "fbx", "obj", "blend"]
 const SKIP_DIRS := [".git", ".godot", "addons", "test", "tests", "export", "build", "node_modules"]
 const MAX_SCAN_DEPTH := 16
-const MODEL_FOLDERS := ["res://assets/models", "res://assets/Models", "res://Assets Models", "res://assets/tmp"]
+const MODEL_FOLDER := "res://assets/models"
 
 var model_paths: Array[String] = []
 var list: ItemList
@@ -150,19 +150,15 @@ func _build_world() -> void:
 func _scan_models() -> void:
 	model_paths.clear()
 	list.clear()
-	# Se exploran explícitamente las carpetas de modelos y, como respaldo,
-	# el resto del proyecto. La ruta real en disco permite detectar archivos
-	# copiados allí aunque todavía no tengan importación en el editor.
-	for folder in MODEL_FOLDERS:
-		if DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(folder)):
-			_collect(folder, 0)
-	_collect("res://", 0)
+	# Solo assets/models y sus subdirectorios: no explorar el repositorio entero.
+	if DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(MODEL_FOLDER)):
+		_collect(MODEL_FOLDER, 0)
 	model_paths.sort()
 	for path in model_paths:
-		list.add_item(path.trim_prefix("res://"))
-	_report("Encontrados %d modelos 3D. Directorio recomendado: res://assets/models/" % model_paths.size())
+		list.add_item(path.trim_prefix(MODEL_FOLDER + "/"))
+	_report("Encontrados %d modelos en %s" % [model_paths.size(), MODEL_FOLDER])
 	if model_paths.is_empty():
-		details.text = "No se encontraron modelos en el proyecto. Verificá que los .glb estén dentro de res://assets/models/ y presioná Volver a buscar."
+		details.text = "No se encontraron modelos. Colocá los .glb en res://assets/models/ y presioná Volver a buscar."
 	else:
 		list.select(0)
 		_on_model_selected(0)

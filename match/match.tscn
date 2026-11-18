@@ -10,27 +10,27 @@ script = ExtResource("1")
 
 [node name="Background" type="Polygon2D" parent="."]
 color = Color(0.075, 0.083, 0.117, 1)
-polygon = PackedVector2Array(0, 0, 384, 0, 384, 216, 0, 216)
+polygon = PackedVector2Array(-256, -100, 640, -100, 640, 216, -256, 216)
 
 [node name="BackWall" type="Polygon2D" parent="."]
 color = Color(0.086, 0.094, 0.141, 1)
-polygon = PackedVector2Array(0, 60, 384, 60, 384, 180, 0, 180)
+polygon = PackedVector2Array(-256, 60, 640, 60, 640, 180, -256, 180)
 
 [node name="ColumnL" type="Polygon2D" parent="."]
-color = Color(0.098, 0.106, 0.157, 1)
-polygon = PackedVector2Array(30, 74, 90, 74, 90, 180, 30, 180)
+color = Color(0.11, 0.12, 0.18, 1)
+polygon = PackedVector2Array(14, 74, 22, 74, 22, 180, 14, 180)
 
 [node name="ColumnR" type="Polygon2D" parent="."]
-color = Color(0.098, 0.106, 0.157, 1)
-polygon = PackedVector2Array(294, 74, 354, 74, 354, 180, 294, 180)
+color = Color(0.11, 0.12, 0.18, 1)
+polygon = PackedVector2Array(362, 74, 370, 74, 370, 180, 362, 180)
 
 [node name="Floor" type="Polygon2D" parent="."]
 color = Color(0.129, 0.117, 0.164, 1)
-polygon = PackedVector2Array(0, 180, 384, 180, 384, 216, 0, 216)
+polygon = PackedVector2Array(-256, 180, 640, 180, 640, 216, -256, 216)
 
 [node name="FloorLine" type="Polygon2D" parent="."]
 color = Color(0.231, 0.208, 0.333, 1)
-polygon = PackedVector2Array(0, 178, 384, 178, 384, 181, 0, 181)
+polygon = PackedVector2Array(-256, 178, 640, 178, 640, 181, -256, 181)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(192, 108)

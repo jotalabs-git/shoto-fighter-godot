@@ -1,36 +1,16 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://match/match_manager.gd" id="1"]
 [ext_resource type="PackedScene" path="res://fighter/fighter.tscn" id="2"]
 [ext_resource type="Script" path="res://input/human_input.gd" id="3"]
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="4"]
+[ext_resource type="Script" path="res://match/concert_stage.gd" id="5"]
 
 [node name="Match" type="Node2D"]
 script = ExtResource("1")
 
-[node name="Background" type="Polygon2D" parent="."]
-color = Color(0.075, 0.083, 0.117, 1)
-polygon = PackedVector2Array(-256, -100, 640, -100, 640, 216, -256, 216)
-
-[node name="BackWall" type="Polygon2D" parent="."]
-color = Color(0.086, 0.094, 0.141, 1)
-polygon = PackedVector2Array(-256, 60, 640, 60, 640, 180, -256, 180)
-
-[node name="ColumnL" type="Polygon2D" parent="."]
-color = Color(0.11, 0.12, 0.18, 1)
-polygon = PackedVector2Array(14, 74, 22, 74, 22, 180, 14, 180)
-
-[node name="ColumnR" type="Polygon2D" parent="."]
-color = Color(0.11, 0.12, 0.18, 1)
-polygon = PackedVector2Array(362, 74, 370, 74, 370, 180, 362, 180)
-
-[node name="Floor" type="Polygon2D" parent="."]
-color = Color(0.129, 0.117, 0.164, 1)
-polygon = PackedVector2Array(-256, 180, 640, 180, 640, 216, -256, 216)
-
-[node name="FloorLine" type="Polygon2D" parent="."]
-color = Color(0.231, 0.208, 0.333, 1)
-polygon = PackedVector2Array(-256, 178, 640, 178, 640, 181, -256, 181)
+[node name="ConcertStage" type="Node2D" parent="."]
+script = ExtResource("5")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(192, 108)

@@ -79,8 +79,12 @@ func _physics_process(delta: float) -> void:
 	var ev := match_state.tick(p1.health, p2.health)
 	if ev == "next_round":
 		_reset_round()
+	elif ev == "fight" and sfx != null:
+		sfx.play_announcer("fight")
 	elif ev == "round_end" and sfx != null:
 		sfx.play_ko()
+	elif ev == "match_end" and sfx != null:
+		sfx.play_announcer("winner")
 	# Pueden actuar en intro y pelea; se congelan en fin de round / fin de match.
 	var can_act := match_state.phase == MatchState.FIGHT or match_state.phase == MatchState.INTRO
 	p1.frozen = not can_act
@@ -139,6 +143,9 @@ func _is_throwing() -> bool:
 	return false
 
 func _reset_round() -> void:
+	if sfx != null:
+		var round_num := mini(match_state.p1_rounds + match_state.p2_rounds + 1, 3)
+		sfx.play_announcer("round_" + str(round_num))
 	_throw_closeup_remaining = 0
 	_throw_was_active = false
 	p1.reset_for_round(Vector2(112.0, 180.0), true)

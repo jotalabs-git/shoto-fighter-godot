@@ -1,6 +1,10 @@
 class_name Fighter
 extends CharacterBody2D
 
+signal attack_cued(move: MoveData)
+signal grab_cued
+signal fall_cued(character: String)
+
 ## Personaje genérico. La MISMA clase sirve para P1, P2 y CPU: consume un InputFrame por
 ## tick y no sabe quién lo controla. Los estados deciden QUÉ hacer; el Fighter expone el
 ## CÓMO (moverse, atacar) e integra física. Las colisiones globales (paredes, pushbox) y
@@ -443,6 +447,7 @@ func try_start_attack(stance: String) -> bool:
 
 func start_move(m: MoveData) -> void:
 	current_move = m
+	attack_cued.emit(m)
 	move_has_hit = false
 	_projectile_spawned = false
 	invuln_frames = m.invuln_startup
@@ -532,6 +537,7 @@ func receive_hit(m: MoveData, attacker_facing: int) -> void:
 	if m.causes_knockdown:
 		knockdown_frames = KNOCKDOWN_FRAMES
 		state_machine.transition_to("Knockdown")
+		fall_cued.emit(character_id)
 	else:
 		hitstun_frames = m.hitstun
 		state_machine.transition_to("Hitstun")
@@ -549,6 +555,7 @@ func is_throwable() -> bool:
 
 func do_throw(victim: Fighter) -> void:
 	current_move = null
+	grab_cued.emit()
 	throw_victim = victim
 	throw_direction = facing()
 	state_machine.transition_to("Throw")
@@ -575,6 +582,7 @@ func release_thrown() -> void:
 	knockdown_frames = KNOCKDOWN_FRAMES
 	vel = Vector2(float(throw_direction) * 120.0, 0.0)
 	state_machine.transition_to("Knockdown")
+	fall_cued.emit(character_id)
 
 func throw_tech() -> void:
 	current_move = null

@@ -1,9 +1,10 @@
 class_name Sfx
 extends Node
 
-## Banco original sintetizado al iniciar, sin assets/licencias externas.
-## Sonidos polifónicos (un solo player cortaría el sonido anterior).
-## Puede sustituirse cada evento por un WAV/OGG propio desde assets/audio/.
+## Audio polifónico: recursos reales CC0 de Kenney versionados en assets/audio/,
+## voces humorísticas CC BY opcionales y capas locales (Independent.nu / Sonniss).
+## Cuando falta una muestra, se sintetiza un reemplazo seguro en memoria.
+## La procedencia y las licencias están en assets/audio/CREDITS.md.
 const SAMPLE_RATE := 22050
 const MAX_VOICES := 12
 

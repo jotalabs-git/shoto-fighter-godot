@@ -12,7 +12,7 @@ func _initialize() -> void:
 func _verify() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.is_empty():
-		printerr("Uso: verify_match.gd -- DIRECTORIO [--cpu] [--slice] [--round]")
+		printerr("Uso: verify_match.gd -- DIRECTORIO [--cpu] [--slice] [--round] [--match]")
 		quit(2)
 		return
 	output = ProjectSettings.globalize_path(args[0])
@@ -25,6 +25,9 @@ func _verify() -> void:
 	cfg.set_mode(cpu, "medium")
 	var arena: MatchManager = load("res://match/match.tscn").instantiate()
 	root.add_child(arena)
+	# Fixed simulation steps can outrun the audio thread. This smoke checks visuals.
+	arena.sfx.queue_free()
+	arena.sfx = null
 	await _ticks(60)
 	var first := arena.p1
 	var second := arena.p2
@@ -85,6 +88,8 @@ func _verify() -> void:
 		await _ticks(2)
 		if not await _jab(second, first, "p2_lp", "reaccion"):
 			return
+		if args.has("--match") and not await _play_match(arena):
+			return
 	print("OK: %s / %s | %s" % [first.character_id, second.character_id, "CPU" if cpu else "dos jugadores"])
 	arena.queue_free()
 	await process_frame
@@ -94,22 +99,48 @@ func _verify() -> void:
 func _jab(attacker: Fighter, defender: Fighter, action: String, screenshot: String) -> bool:
 	var hp := defender.health
 	var showed_active := false
+	var native_art := attacker.sprite.sprite_frames != KfmFrames.get_frames()
 	Input.action_press(action)
 	await _ticks(1)
 	Input.action_release(action)
 	for tick in 20:
-		await process_frame
-		if attacker.is_attack_active() and attacker.sprite.animation == "stand_lp":
+		await create_timer(0.0).timeout
+		if not showed_active and attacker.is_attack_active() and attacker.sprite.animation == "stand_lp":
 			showed_active = true
 			await _capture(screenshot + "-activo")
-			if not _require(attacker.sprite.frame == 1 or attacker.sprite.sprite_frames == KfmFrames.get_frames(),
+			if not _require(not native_art or (attacker.sprite.frame == 1 and not attacker.sprite.is_playing()),
 					"El jab activo no coincide con la pose de impacto"):
 				return false
-			break
-	await _ticks(9)
-	await _capture(screenshot + "-dano")
-	return _require(showed_active and defender.health == hp - 30 and defender.sprite.animation == "hurt",
+		if showed_active and defender.health == hp - 30 and defender.sprite.animation == "hurt":
+			await _capture(screenshot + "-dano")
+			if native_art:
+				if not _require(attacker.hitstop_frames > 3, "No se observó el hitstop"):
+					return false
+				await _ticks(1)
+				if not _require(attacker.sprite.frame == 1, "La pose avanzó durante el hitstop"):
+					return false
+			return true
+	return _require(false,
 		"Jab y reacción inesperados: vida %d -> %d, pose %s" % [hp, defender.health, defender.sprite.animation])
+
+func _play_match(arena: MatchManager) -> bool:
+	for tick in 3500:
+		if arena.p2.position.x - arena.p1.position.x > 45.0:
+			Input.action_press("p1_right")
+		else:
+			Input.action_release("p1_right")
+		if tick % 28 == 0:
+			Input.action_press("p1_lp")
+		elif tick % 28 == 1:
+			Input.action_release("p1_lp")
+		await physics_frame
+		if arena.match_state.match_over():
+			break
+	Input.action_release("p1_lp")
+	Input.action_release("p1_right")
+	await _capture("fin-match")
+	print("Resultado local: rounds P1=%d P2=%d" % [arena.match_state.p1_rounds, arena.match_state.p2_rounds])
+	return _require(arena.match_state.match_winner() == 1, "El combate local no terminó con victoria de P1")
 
 func _ticks(count: int) -> void:
 	for tick in count:

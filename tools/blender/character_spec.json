@@ -5,6 +5,12 @@
     "ortho_width": 4.4,
     "view_yaw_degrees": 12
   },
+  "attack_phases": {
+    "normal": [1, 2],
+    "palm": [2, 3],
+    "upper": [1, 2],
+    "knee": [2, 4]
+  },
   "characters": {
     "guitarist": {
       "label": "El Guitarrista",

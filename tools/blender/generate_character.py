@@ -64,7 +64,7 @@ def key_pose(rig, values, frame):
             bone.keyframe_insert(channel, frame=frame, group=name)
 
 
-def add_actions(rig, character, complete):
+def add_actions(rig, character, complete, attack_phases):
     catalog = {}
     reference = read_json(REFERENCE)["anims"]
     scene = bpy.context.scene
@@ -87,6 +87,10 @@ def add_actions(rig, character, complete):
         action.frame_start = 1
         action.frame_end = tick if loop else tick - 1
         catalog[name] = {"frames": len(frames), "durs": [duration for duration, _ in frames], "loop": loop}
+        if name.startswith(("stand_", "crouch_")):
+            catalog[name]["phases"] = attack_phases["normal"]
+        elif name in attack_phases:
+            catalog[name]["phases"] = attack_phases[name]
     scene["sprite_catalog"] = json.dumps(catalog)
     rig.animation_data.action = bpy.data.actions["idle"]
     rig.animation_data.action_slot = rig.animation_data.action.slots[0]
@@ -129,7 +133,7 @@ def stage(settings):
     # CPU Cycles is available even on headless workstations without a GPU context.
     scene.render.engine = "CYCLES"
     scene.cycles.device = "CPU"
-    scene.cycles.samples = 12
+    scene.cycles.samples = 24
     scene.cycles.seed = 19
     scene.cycles.use_animated_seed = False
     scene.cycles.use_denoising = True
@@ -152,7 +156,7 @@ def generate(args):
     rig = make_rig()
     build(rig, character["palette"], args.character == "frontman")
     stage(settings["camera"])
-    add_actions(rig, args.character, args.full)
+    add_actions(rig, args.character, args.full, settings["attack_phases"])
     bpy.ops.object.select_all(action="DESELECT")
     rig.select_set(True)
     bpy.context.view_layer.objects.active = rig

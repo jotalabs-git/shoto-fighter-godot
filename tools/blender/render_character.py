@@ -1,5 +1,6 @@
 """Render authored actions to numbered RGBA sprites and publish a validated manifest."""
 import hashlib
+import json
 import os
 import shutil
 import sys
@@ -12,7 +13,8 @@ from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import ASSETS, SOURCES, blender_args, read_json, write_json
+from common import ASSETS, REFERENCE, SOURCES, blender_args, read_json, write_json
+from png import strip_text_metadata
 from validate_character import validate
 
 
@@ -23,7 +25,7 @@ def export(args):
     bpy.ops.wm.open_mainfile(filepath=str(source))
     scene = bpy.context.scene
     rig = bpy.data.objects["Rig"]
-    catalog = read_json_from_scene(scene)
+    catalog = json.loads(scene["sprite_catalog"])
     selected = args.actions or list(catalog)
     unknown = set(selected) - catalog.keys()
     if unknown:
@@ -39,6 +41,9 @@ def export(args):
     target = args.output or ASSETS / args.character
     prior = target / "manifest.json"
     manifest = read_json(prior) if prior.exists() else {"canvas": canvas, "axis": axis, "anims": {}}
+    known = read_json(REFERENCE)["anims"]
+    if set(manifest["anims"]) - known.keys():
+        raise ValueError(f"{prior}: contiene nombres de animación no admitidos")
     if manifest["canvas"] != canvas or manifest["axis"] != axis:
         if set(manifest["anims"]) - set(selected):
             raise ValueError("cambió la calibración, reexportá todas las acciones existentes")
@@ -47,12 +52,21 @@ def export(args):
     target.parent.mkdir(parents=True, exist_ok=True)
     cache_path = target / ".render-cache.json"
     cache = read_json(cache_path) if cache_path.exists() else {}
+    for directory in target.iterdir() if target.exists() else ():
+        if directory.is_symlink():
+            raise ValueError(f"{directory}: enlace simbólico no permitido")
+        if directory.is_dir() and directory.name not in manifest["anims"] and any(directory.glob("*.png")):
+            raise ValueError(f"{directory}: carpeta con PNG fuera del manifiesto")
+
     # Stage the full proposed export on the same filesystem and validate before replacing files.
     with tempfile.TemporaryDirectory(prefix=f".{target.name}-", dir=target.parent) as temporary:
         stage = Path(temporary)
         for name in manifest["anims"]:
             old = target / name
             if old.is_dir():
+                for file in old.glob("*.png"):
+                    if file.is_symlink():
+                        raise ValueError(f"{file}: enlace simbólico no permitido")
                 shutil.copytree(old, stage / name, ignore=shutil.ignore_patterns("*.import"))
         if target.exists():
             prior_errors = validate(target)
@@ -77,6 +91,7 @@ def export(args):
                 scene.frame_set(tick)
                 scene.render.filepath = str(directory / f"{index:03d}.png")
                 bpy.ops.render.render(write_still=True)
+                strip_text_metadata(Path(scene.render.filepath))
                 tick += duration
             manifest["anims"][name] = info
             cache[name] = fingerprint
@@ -101,11 +116,6 @@ def export(args):
         os.replace(stage / "manifest.json", prior)
         os.replace(stage / ".render-cache.json", cache_path)
     print(f"{args.character}: {len(manifest['anims'])} acciones válidas en {time.monotonic() - started:.1f} s")
-
-
-def read_json_from_scene(scene):
-    import json
-    return json.loads(scene["sprite_catalog"])
 
 
 if __name__ == "__main__":

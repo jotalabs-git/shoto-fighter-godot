@@ -40,7 +40,11 @@
         3,
         4
       ],
-      "loop": false
+      "loop": false,
+      "phases": [
+        1,
+        2
+      ]
     },
     "hurt": {
       "frames": 3,
@@ -103,7 +107,11 @@
         6,
         6
       ],
-      "loop": false
+      "loop": false,
+      "phases": [
+        1,
+        2
+      ]
     },
     "stand_hp": {
       "frames": 4,
@@ -113,7 +121,11 @@
         9,
         9
       ],
-      "loop": false
+      "loop": false,
+      "phases": [
+        1,
+        2
+      ]
     },
     "stand_lk": {
       "frames": 5,
@@ -124,7 +136,11 @@
         3,
         2
       ],
-      "loop": false
+      "loop": false,
+      "phases": [
+        1,
+        2
+      ]
     },
     "stand_mk": {
       "frames": 5,
@@ -135,7 +151,11 @@
         3,
         8
       ],
-      "loop": false
+      "loop": false,
+      "phases": [
+        1,
+        2
+      ]
     },
     "stand_hk": {
       "frames": 5,
@@ -146,7 +166,11 @@
         3,
         14
       ],
-      "loop": false
+      "loop": false,
+      "phases": [
+        1,
+        2
+      ]
     },
     "crouch_lp": {
       "frames": 4,
@@ -156,7 +180,11 @@
         3,
         3
       ],
-      "loop": false
+      "loop": false,
+      "phases": [
+        1,
+        2
+      ]
     },
     "crouch_mp": {
       "frames": 4,
@@ -166,7 +194,11 @@
         5,
         6
       ],
-      "loop": false
+      "loop": false,
+      "phases": [
+        1,
+        2
+      ]
     },
     "crouch_lk": {
       "frames": 5,
@@ -177,7 +209,11 @@
         3,
         1
       ],
-      "loop": false
+      "loop": false,
+      "phases": [
+        1,
+        2
+      ]
     },
     "crouch_hk": {
       "frames": 5,
@@ -188,7 +224,11 @@
         3,
         16
       ],
-      "loop": false
+      "loop": false,
+      "phases": [
+        1,
+        2
+      ]
     },
     "guard": {
       "frames": 1,
@@ -252,7 +292,11 @@
         9,
         18
       ],
-      "loop": false
+      "loop": false,
+      "phases": [
+        2,
+        3
+      ]
     },
     "upper": {
       "frames": 5,
@@ -263,7 +307,11 @@
         8,
         10
       ],
-      "loop": false
+      "loop": false,
+      "phases": [
+        1,
+        2
+      ]
     },
     "knee": {
       "frames": 6,
@@ -275,7 +323,11 @@
         5,
         7
       ],
-      "loop": false
+      "loop": false,
+      "phases": [
+        2,
+        4
+      ]
     }
   }
 }

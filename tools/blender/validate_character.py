@@ -59,6 +59,12 @@ def validate(folder, complete=False):
             errors.append(f"{name}: durs debe contener {count} enteros positivos")
         if type(loop) is not bool:
             errors.append(f"{name}: loop debe ser booleano")
+        if "phases" in info:
+            phases = info["phases"]
+            if not (isinstance(phases, list) and len(phases) == 2
+                    and all(type(index) is int for index in phases)
+                    and 0 < phases[0] < phases[1] < count and loop is False):
+                errors.append(f"{name}: phases debe indicar dos índices crecientes de una acción no cíclica")
         directory = folder / name
         if directory.is_symlink():
             errors.append(f"{name}: directorio simbólico no permitido")

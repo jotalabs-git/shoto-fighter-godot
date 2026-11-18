@@ -57,7 +57,7 @@ Los comandos de reproducción están en [tools/blender/README.md](../tools/blend
 
 - `tools/blender/run.sh generate guitarist --full` reconstruyó la fuente.
   `tools/blender/run.sh render guitarist --actions` recibió los 22 nombres
-  faltantes de KFM. Conservó los 19 PNG de G2.
+  faltantes de KFM. Añadió 94 PNG en 16,4 s y conservó los 19 PNG de G2.
 - El validador bloqueó la primera exportación porque `knockdown/003.png`
   y `getup/000.png` tocaban el borde inferior. Se elevó la pose caída con
   apoyo de la bota y se repitió la exportación. `g3-render-rejected.log`
@@ -87,3 +87,83 @@ Los comandos de reproducción están en [tools/blender/README.md](../tools/blend
   ambas direcciones. La ronda headless vs CPU terminó en KO con
   P1 en 400 de vida y P2 en 0. Los avisos del smoke incluían V-Sync
   bajo Xvfb y objetos WAV al cerrar la corrida acelerada.
+
+## G5 · Integración final
+
+- Se pulieron los especiales, el pulso del Frontman en guardia y el
+  material de ambos con 24 muestras de Cycles. Las acciones de ataque
+  llevan marcadores de impacto y recuperación. La presentación usa el
+  tick real del ataque y mantiene la pose en hitstop. Los alias de
+  golpes aéreos, agachados y especiales conservan sus tiempos lógicos.
+- `tools/blender/run.sh generate <id> --full` y `render <id>` se
+  ejecutaron para ambos luchadores. Las exportaciones completas
+  tardaron 30,4 s y 29,6 s respectivamente, incluida validación.
+  Cada fuente ocupa unos 463 KiB. Los PNG de ambos suman unos 4,6 MiB.
+- `python3 tools/blender/validate_character.py <id> --complete` aprobó
+  113 PNG por luchador. Una copia con un hueco de numeración se rechazó
+  e identificó tanto `idle/001.png` faltante como `idle/004.png` extra.
+- La regeneración de guardia, jab y caída del Guitarrista produjo
+  los mismos píxeles en 12 fotogramas. La primera comparación binaria
+  detectó marcas de tiempo y rutas de Blender en los PNG. El exportador
+  ahora las retira. Los 12 PNG coinciden byte por byte al repetir la prueba.
+- Blender abrió ambas fuentes y confirmó la misma jerarquía de 15
+  huesos, 26 acciones editables por fuente, cámara ortográfica y cierre
+  de los siete bucles declarados. Evidencia en `g5-sources.log`.
+- La importación headless y la suite `bash scripts/check-linux.sh`
+  aprobaron **103 pruebas en 29 suites**, incluidas carga propia,
+  fallback a KFM, HUD, bloqueos, proyectiles, golpes, IA y rondas.
+  Una copia limpia del índice de Git aprobó los mismos 103 tests.
+  Evidencia en `g5-godot.log` y `g5-clean-tree.log`.
+- Los smokes con Xvfb revisaron ambos sets reflejados, impactos,
+  hitstop y reacción. La prueba local headless con `--match` terminó
+  **2–0**. Contra CPU, la ronda headless terminó por KO con **400–0**
+  de vida y las capturas de Xvfb registraron un intercambio. Las
+  corridas gráficas usan entradas programadas, audio desactivado
+  en el verificador y llvmpipe, que avisó sobre V-Sync.
+- Capturas finales en `g5-match/` y `g5-cpu/`. Los mosaicos
+  `g5-guitarist-acciones.png` y `g5-frontman-acciones.png`
+  muestran guardia, jab, reacción, agachado, patada, especiales y caída.
+  El perfil inicial de 128 px está en `g1-perfil-128.png`.
+
+### Inventario final
+
+`getup` y `hurt_low` están disponibles para reutilizar en Blender
+y en el manifiesto. El selector actual de estados usa `knockdown`
+y `hurt`.
+
+| Acción | PNG por luchador | Ticks Guitarrista | Ticks Frontman |
+| --- | ---: | ---: | ---: |
+| `idle` | 4 | 26 | 18 |
+| `walk_fwd` | 8 | 24 | 24 |
+| `walk_back` | 8 | 24 | 24 |
+| `crouch` | 1 | 1 | 1 |
+| `jump` | 5 | 37 | 37 |
+| `run` | 6 | 18 | 18 |
+| `stand_lp` | 4 | 14 | 14 |
+| `stand_mp` | 4 | 21 | 21 |
+| `stand_hp` | 4 | 31 | 31 |
+| `stand_lk` | 5 | 16 | 16 |
+| `stand_mk` | 5 | 25 | 25 |
+| `stand_hk` | 5 | 35 | 35 |
+| `crouch_lp` | 4 | 13 | 13 |
+| `crouch_mp` | 4 | 20 | 20 |
+| `crouch_lk` | 5 | 14 | 14 |
+| `crouch_hk` | 5 | 34 | 34 |
+| `guard` | 1 | 1 | 1 |
+| `guard_crouch` | 1 | 1 | 1 |
+| `hurt` | 3 | 12 | 12 |
+| `hurt_low` | 2 | 10 | 10 |
+| `knockdown` | 4 | 40 | 40 |
+| `getup` | 4 | 32 | 32 |
+| `throw` | 5 | 29 | 29 |
+| `palm` | 5 | 43 | 43 |
+| `upper` | 5 | 35 | 35 |
+| `knee` | 6 | 31 | 31 |
+| **Total** | **113** | | |
+
+### Commits
+
+- G0–G2 · `078c7f0` · Pipeline y primer personaje en Godot.
+- G3 · `e8d85ed` · Catálogo completo del Guitarrista.
+- G4 · `d2368c7` · Frontman sobre el rig compartido.
+- G5 · `feat(art): polish and verify both Blender fighters`.

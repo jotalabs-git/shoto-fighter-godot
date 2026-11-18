@@ -66,6 +66,7 @@ static func _build(folder: String) -> SpriteFrames:
 	if not animations.has("idle"):
 		return null
 	var frames := SpriteFrames.new()
+	var attack_phases := {}
 	if frames.has_animation("default"):
 		frames.remove_animation("default")
 	for anim in animations:
@@ -79,6 +80,13 @@ static func _build(folder: String) -> SpriteFrames:
 		frames.add_animation(anim)
 		frames.set_animation_loop(anim, bool(info.get("loop", false)))
 		frames.set_animation_speed(anim, 60.0)
+		var phases = info.get("phases")
+		if phases is Array and phases.size() == 2 and typeof(phases[0]) in [TYPE_INT, TYPE_FLOAT] \
+				and typeof(phases[1]) in [TYPE_INT, TYPE_FLOAT]:
+			var impact := int(phases[0])
+			var recovery := int(phases[1])
+			if 0 < impact and impact < recovery and recovery < count:
+				attack_phases[anim] = Vector2i(impact, recovery)
 		for i in range(count):
 			var path := "%s/%s/%03d.png" % [folder, anim, i]
 			var tex := load(path) as Texture2D
@@ -90,4 +98,5 @@ static func _build(folder: String) -> SpriteFrames:
 	if frames.get_frame_count("idle") == 0:
 		return null
 	_axis_cache[folder] = Vector2(float(ax[0]), float(ax[1]))
+	frames.set_meta("attack_phases", attack_phases)
 	return frames

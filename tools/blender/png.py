@@ -11,13 +11,10 @@ def paeth(left, above, diagonal):
     return left if a <= b and a <= c else above if b <= c else diagonal
 
 
-def read_png(path, expected_size=None):
-    data = path.read_bytes()
+def chunks(data):
     if not data.startswith(SIGNATURE):
         raise ValueError("firma PNG inválida")
     pos = len(SIGNATURE)
-    compressed = bytearray()
-    width = height = 0
     while pos + 12 <= len(data):
         size, kind = struct.unpack_from(">I4s", data, pos)
         end = pos + 8 + size
@@ -26,8 +23,30 @@ def read_png(path, expected_size=None):
         part = data[pos + 8:end]
         if zlib.crc32(kind + part) != struct.unpack_from(">I", data, end)[0]:
             raise ValueError(f"CRC inválido en {kind!r}")
+        yield kind, part, data[pos:end + 4]
+        if kind == b"IEND":
+            if size or end + 4 != len(data):
+                raise ValueError("IEND inválido")
+            return
+        pos = end + 4
+    raise ValueError("falta IEND")
+
+
+def strip_text_metadata(path):
+    # Blender includes host paths and wall-clock render times in textual chunks.
+    data = path.read_bytes()
+    cleaned = SIGNATURE + b"".join(raw for kind, _, raw in chunks(data)
+                                   if kind not in {b"tEXt", b"zTXt", b"iTXt"})
+    if cleaned != data:
+        path.write_bytes(cleaned)
+
+
+def read_png(path, expected_size=None):
+    compressed = bytearray()
+    width = height = 0
+    for index, (kind, part, _) in enumerate(chunks(path.read_bytes())):
         if kind == b"IHDR":
-            if pos != len(SIGNATURE) or size != 13:
+            if index != 0 or len(part) != 13:
                 raise ValueError("IHDR inválido")
             width, height, bits, color, method, filters, interlace = struct.unpack(">IIBBBBB", part)
             if (bits, color, method, filters, interlace) != (8, 6, 0, 0, 0):
@@ -38,13 +57,6 @@ def read_png(path, expected_size=None):
                 raise ValueError(f"canvas {(width, height)} distinto de {expected_size}")
         elif kind == b"IDAT":
             compressed.extend(part)
-        elif kind == b"IEND":
-            if size or end + 4 != len(data):
-                raise ValueError("IEND inválido")
-            break
-        pos = end + 4
-    else:
-        raise ValueError("falta IEND")
     if not width or not compressed:
         raise ValueError("falta IHDR o IDAT")
     stride = width * 4

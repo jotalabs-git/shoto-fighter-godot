@@ -31,11 +31,13 @@ de animación presentes en el manifiesto de KFM. La ausencia de una
 animación concreta se muestra en idle sin modificar el tiempo lógico
 del golpe.
 
-IDs reservados: `guitarist` y `frontman`. De momento mantienen
-estadísticas y ataques de prueba: todavía no incluyen arte original.
-Para hacerlos aparecer en un combate, cambiar los `character_id`
-de Player1/Player2 en `match/match.tscn`; el HUD obtiene los nombres
-del registro.
+`guitarist` y `frontman` incluyen sus propios sprites y son los luchadores
+de la escena de combate. Conservan los perfiles de Kaze y Homura,
+respectivamente. El HUD obtiene sus nombres del registro.
+
+Las acciones de ataque pueden declarar `phases: [impacto, recuperación]`
+con los índices de inicio de esos tramos, empezando desde cero. Godot
+ajusta la pose al tick del ataque actual, incluidos alias y hitstop.
 
 ## Flujo Blender → Godot
 
@@ -46,5 +48,7 @@ del registro.
 5. Comprobar que cada animación se reproduce y que las cajas de colisión
    (F1) continúan alineadas con el cuerpo.
 
-El arte original debe conservar su propia licencia. Los recursos KFM
-existentes siguen sujetos a sus condiciones no comerciales.
+Las fuentes editables están en [tools/blender/sources](../../tools/blender/sources).
+Los [comandos de generación](../../tools/blender/README.md) y
+el [informe de G0–G5](../../docs/personajes-blender-qa.md) describen el flujo verificado.
+Los recursos KFM existentes siguen sujetos a sus condiciones no comerciales.

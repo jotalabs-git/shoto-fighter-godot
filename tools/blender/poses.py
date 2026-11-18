@@ -142,6 +142,9 @@ def actions(character, full):
         "hurt": [(4, recoil), (4, dict(recoil, head=(-.43, 0, 2.51))), (4, base)],
     }
     result["idle"][-1][1].update({key: base[key] for key in ("foot_near", "foot_far")})
+    if vocalist:
+        bob["hand_far"] = (.52, .10, 2.05)
+        result["idle"] = [(5, base), (4, bob), (5, base), (4, result["idle"][-1][1])]
     if not full:
         return result
 
@@ -192,6 +195,16 @@ def actions(character, full):
                  (4, dict(jump, knee_far=(.98, .14, 1.29), foot_far=(.53, .16, .91))),
                  (5, jump), (7, base)],
     })
+    if vocalist:
+        result["palm"][2] = (5, dict(base, neck=(.37, 0, 1.91), head=(.56, 0, 2.47),
+                                   hand_near=(1.13, -.42, 1.70), elbow_near=(.69, -.47, 1.63),
+                                   elbow_far=(.38, .33, 1.68), hand_far=(.56, .10, 2.18)))
+    else:
+        result["palm"][2] = (5, dict(base, hand_near=(-.26, -.65, 1.30), elbow_near=(-.36, -.45, 1.56),
+                                   hand_far=(.76, .27, 1.76), instrument_tip=(.17, 0, 1.97)))
+        for index, tip in ((1, (-.24, 0, 1.94)), (2, (-.14, 0, 1.95))):
+            duration, pose = result["upper"][index]
+            result["upper"][index] = (duration, dict(pose, instrument_tip=tip))
     return result
 
 

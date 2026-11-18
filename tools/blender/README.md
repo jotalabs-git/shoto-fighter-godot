@@ -35,7 +35,8 @@ cada acción del `Rig`. `poses.py` define el storyboard, los joints y los
 ticks por pose. `character_spec.json` define las paletas y la calibración.
 
 `render` abre el .blend existente. Renderiza una pose al comienzo de cada
-intervalo declarado, valida la exportación propuesta en un directorio
+intervalo declarado, descarta metadatos variables de fecha y ruta,
+valida la exportación propuesta en un directorio
 temporal y solo entonces publica los PNG numerados y `manifest.json`.
 `--actions` sirve para reemplazar acciones individuales manteniendo las
 demás. Usá una ejecución a la vez por carpeta de salida. Cuando cambia
@@ -51,8 +52,9 @@ La cámara ortográfica exporta RGBA8 de **176 × 148**, con apoyo en
 **[79, 136]** y frente hacia la derecha. El margen adicional en X
 deja espacio para los derribos y las patadas extendidas. El eje se
 valida proyectando el origen fijo. Cada intervalo del manifiesto está
-en ticks de 60 Hz. Los efectos, hitboxes y tiempos lógicos pertenecen
-al motor de combate.
+en ticks de 60 Hz. Los ataques indican los índices de inicio del impacto
+y de la recuperación para ajustar la pose visual al estado del combate.
+Los efectos, hitboxes y tiempos lógicos pertenecen al motor de combate.
 
 ## Revisión
 
@@ -70,12 +72,17 @@ xvfb-run -a godot --path . --audio-driver Dummy --resolution 768x432 \
   reports/character-art/cpu --cpu
 godot --headless --path . --fixed-fps 60 \
   --script res://tools/blender/verify_match.gd -- reports/character-art/cpu --cpu --round
+godot --headless --path . --fixed-fps 60 \
+  --script res://tools/blender/verify_match.gd -- reports/character-art/dos-jugadores --match
 ```
 
 Sin argumentos de pose, el mosaico muestra el fotograma central de
 cada acción. Acompaña al PNG un JSON con índice y ubicación. La línea
 horizontal marca el piso. La opción `--slice` del smoke test se usa cuando
 el Guitarrista tiene cuatro acciones y el Frontman sigue con KFM.
+La comprobación gráfica usa inputs programados y desactiva el audio de
+su instancia. `--round` verifica el fin de una ronda contra CPU y
+`--match` completa dos rondas en el modo local.
 
 Si Godot muestra KFM después del render, corré primero
 `godot --headless --path . --editor --import --quit` y verificá el set

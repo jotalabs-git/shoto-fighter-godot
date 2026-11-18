@@ -233,8 +233,43 @@ func _process(_delta: float) -> void:
 		if a != _cur_anim:
 			_cur_anim = a
 			sprite.play(a if sprite.sprite_frames.has_animation(a) else "idle")
+		if st == "Attack" and current_move != null:
+			var authored_phases: Dictionary = sprite.sprite_frames.get_meta("attack_phases", {})
+			if authored_phases.has(a):
+				_sync_attack_sprite(a, authored_phases[a])
 		sprite.scale = Vector2(SPRITE_SCALE * facing(), SPRITE_SCALE)
 	queue_redraw()
+
+func _sync_attack_sprite(animation: String, markers: Vector2i) -> void:
+	# Fit authored pose intervals to the current move, including aliases and hitstop.
+	var tick := state_machine.current_state.state_frame
+	var startup := current_move.startup
+	var end_active := startup + current_move.active
+	var phase := MovePhase.phase_at(tick, startup, current_move.active, current_move.recovery)
+	var first := 0
+	var last := markers.x
+	var fraction := float(tick) / maxf(startup, 1.0)
+	match phase:
+		MovePhase.ACTIVE:
+			first = markers.x
+			last = markers.y
+			fraction = float(tick - startup) / maxf(current_move.active, 1.0)
+		MovePhase.RECOVERY, MovePhase.DONE:
+			first = markers.y
+			last = sprite.sprite_frames.get_frame_count(animation)
+			fraction = float(tick - end_active) / maxf(current_move.recovery, 1.0)
+			fraction = clampf(fraction, 0.0, 0.9999)
+	var duration := 0.0
+	for index in range(first, last):
+		duration += sprite.sprite_frames.get_frame_duration(animation, index)
+	var elapsed := fraction * duration
+	sprite.pause()
+	for index in range(first, last):
+		var span := sprite.sprite_frames.get_frame_duration(animation, index)
+		if elapsed < span or index == last - 1:
+			sprite.set_frame_and_progress(index, elapsed / span)
+			return
+		elapsed -= span
 
 func _draw() -> void:
 	# Cajas de golpe/daño (modo entrenamiento) para leer alcance y timing.

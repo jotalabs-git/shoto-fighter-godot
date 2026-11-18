@@ -7,7 +7,7 @@ extends RefCounted
 
 static func stats(id: String) -> Dictionary:
 	match id:
-		"homura":
+		"homura", "frontman":
 			return {
 				"walk_fwd_speed": 210.0, "walk_back_speed": 160.0,
 				"dash_fwd_speed": 470.0, "dash_fwd_frames": 12,
@@ -22,7 +22,7 @@ static func stats(id: String) -> Dictionary:
 
 static func specials_for(id: String) -> Dictionary:
 	var d := MoveSet.default_specials()
-	if id == "homura":
+	if id in ["homura", "frontman"]:
 		for k in ["hadouken.l", "hadouken.m", "hadouken.h"]:
 			d[k].recovery = 42          # fireball peor
 		for k in ["dp.l", "dp.m", "dp.h"]:

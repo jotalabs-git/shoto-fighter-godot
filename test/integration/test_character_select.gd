@@ -53,6 +53,19 @@ func test_both_local_players_change_previews_independently() -> void:
 	assert_bool(is_instance_valid(select._models[0])).is_true()
 	assert_bool(is_instance_valid(select._models[1])).is_true()
 
+func test_preview_cameras_face_the_models_and_use_brand_fonts() -> void:
+	GameConfig.p2_is_cpu = false
+	var select := SELECT.instantiate()
+	add_child(select)
+	auto_free(select)
+	for side in 2:
+		var camera := select._viewport_nodes[side].get_node("PreviewCamera") as Camera3D
+		assert_bool(camera.is_inside_tree()).is_true()
+		var direction := (Vector3(0.0, 1.27, 0.0) - camera.global_position).normalized()
+		assert_float((-camera.global_basis.z).dot(direction)).is_greater(0.99)
+	for card: Button in select._cards:
+		assert_bool(card.get_theme_font("font") != null).is_true()
+
 func test_character_configuration_is_applied_on_match_enter_tree() -> void:
 	GameConfig.set_characters("ozzy", "bruce")
 	var arena: MatchManager = MATCH.instantiate()

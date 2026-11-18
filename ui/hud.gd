@@ -24,6 +24,17 @@ const CRITICAL_COLOR := RockBrand.ROCK_RED
 var p1: Fighter
 var p2: Fighter
 
+func _ready() -> void:
+	var ui_font := RockBrand.font_file("ui")
+	var impact_font := RockBrand.font_file("impact")
+	if ui_font != null:
+		for label in [p1_name, p2_name, timer_label, p1_pips, p2_pips, $P1Tag, $P2Tag, $Brand]:
+			label.add_theme_font_override("font", ui_font)
+	if impact_font != null:
+		msg_label.add_theme_font_override("font", impact_font)
+		msg_shadow.add_theme_font_override("font", impact_font)
+
+
 func set_timer(seconds: int) -> void:
 	if timer_label == null:
 		return

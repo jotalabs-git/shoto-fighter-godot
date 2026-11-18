@@ -27,3 +27,13 @@ func test_wider_stage_zoom_out_is_progressive() -> void:
 	assert_float(close[0]).is_equal(192.0)
 	assert_float(start[0]).is_equal(192.0)
 	assert_float(far[0]).is_equal(192.0)
+
+func test_throw_closeup_tracks_both_fighters_without_changing_their_positions() -> void:
+	var closeup := CameraLogic.throw_closeup(164.0, 220.0, 1.55)
+	assert_float(closeup[0]).is_equal(192.0)
+	assert_float(closeup[1]).is_equal(1.55)
+
+func test_throw_closeup_keeps_center_when_attacker_is_on_other_side() -> void:
+	var closeup := CameraLogic.throw_closeup(220.0, 164.0, 1.55)
+	assert_float(closeup[0]).is_equal(192.0)
+	assert_float(closeup[1]).is_equal(1.55)

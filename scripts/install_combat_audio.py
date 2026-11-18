@@ -96,6 +96,14 @@ def _unpack(archive: Path, destination: Path) -> None:
                 if source.is_file() and source.suffix.lower() in (".ogg", ".wav", ".mp3"):
                     if source.stat().st_size <= 30 * 1024 * 1024:
                         shutil.copy2(source, destination / source.name)
+                elif source.is_file() and source.suffix.lower() == ".flac":
+                    ffmpeg = shutil.which("ffmpeg")
+                    if ffmpeg is None:
+                        raise RuntimeError("Hace falta ffmpeg para convertir los FLAC de Independent.nu")
+                    out = destination / (source.stem + ".wav")
+                    subprocess.run([ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
+                                    "-i", str(source), "-ar", "22050", "-ac", "1", str(out)],
+                                   check=True)
 
 
 def _audio_files(directory: Path) -> list[Path]:
@@ -135,16 +143,27 @@ def _map_pack(key: str, directory: Path) -> list[dict]:
     return mapped
 
 
-def _install_pack(key: str) -> dict:
+def _install_pack(key: str, archives: Path) -> dict:
     url, license_name, author, source_url = PACKS[key]
     destination = LIBRARY / key
-    if not _audio_files(destination) if destination.exists() else True:
+    if not destination.exists() or not _audio_files(destination):
         destination.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory() as td:
-            path = Path(td) / ("sound.7z" if key == "oga_hits" else "sound.zip")
-            print(f"Descargando {key}...", flush=True)
-            _download(url, path)
-            _unpack(path, destination)
+        filenames = {
+            "kenney_impact": "kenney_impact-sounds.zip",
+            "kenney_announcer": "kenney_voiceover-pack-fighter.zip",
+            "oga_hits": "independent_nu_ljudbank-hits_and_punches.7z",
+            "oga_cute": "cute.zip",
+        }
+        local_archive = archives / filenames[key]
+        if local_archive.is_file():
+            print(f"Instalando {key} desde {local_archive}", flush=True)
+            _unpack(local_archive, destination)
+        else:
+            with tempfile.TemporaryDirectory() as td:
+                path = Path(td) / ("sound.7z" if key == "oga_hits" else "sound.zip")
+                print(f"Descargando {key}...", flush=True)
+                _download(url, path)
+                _unpack(path, destination)
     files = _audio_files(destination)
     mapped = _map_pack(key, destination)
     print(f"OK {key}: {len(files)} archivos, {len(mapped)} asignaciones")
@@ -156,6 +175,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pack", choices=(*PACKS, "all"), default="all",
                         help="Paquete por instalar (por defecto todos)")
+    parser.add_argument("--archive-dir", type=Path,
+                        default=LOCAL / "downloads",
+                        help="Carpeta con ZIP/7z descargados manualmente (si existen)")
     parser.add_argument("--sonniss-impact", type=Path,
                         help="WAV/OGG de impacto obtenido legalmente del bundle Sonniss")
     parser.add_argument("--sonniss-fall", type=Path,
@@ -168,7 +190,7 @@ def main() -> int:
     packs = list(PACKS) if args.pack == "all" else [args.pack]
     for key in packs:
         try:
-            manifest.append(_install_pack(key))
+            manifest.append(_install_pack(key, args.archive_dir))
         except Exception as exc:
             failed.append(key)
             print(f"ERROR {key}: {exc}", file=sys.stderr)

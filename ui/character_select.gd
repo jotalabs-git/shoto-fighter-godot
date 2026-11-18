@@ -80,8 +80,7 @@ func _construct() -> void:
 		button.pressed.connect(_pick_card.bind(index))
 		add_child(button)
 		_cards.append(button)
-	_label("P1: WASD + U   P2: FLECHAS + ,", Vector2(54, 202), Vector2(276, 13), 7, MUTED, HORIZONTAL_ALIGNMENT_CENTER)
-	_hints = _label("", Vector2(30, 191), Vector2(324, 11), 7, MUTED, HORIZONTAL_ALIGNMENT_CENTER)
+	_hints = _label("", Vector2(8, 203), Vector2(368, 12), 7, MUTED, HORIZONTAL_ALIGNMENT_CENTER)
 
 func _card_style(color: Color, selected: bool) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
@@ -205,7 +204,7 @@ func _refresh_all() -> void:
 		_status[side].text = "CPU / ALEATORIO" if side == 1 and _is_cpu else ("LISTO" if _confirmed[side] else "ELEGIR + CONFIRMAR")
 		_load_preview(side)
 	_update_cards()
-	_hints.text = "ESC: VOLVER / DESCONFIRMAR" if not _is_cpu else "WASD CAMBIAR  ·  U CONFIRMAR  ·  ESC VOLVER"
+	_hints.text = "P1 WASD/U  ·  P2 FLECHAS/,  ·  ESC VOLVER" if not _is_cpu else "WASD CAMBIAR  ·  U CONFIRMAR  ·  ESC VOLVER"
 
 func _update_cards() -> void:
 	for i in _cards.size():

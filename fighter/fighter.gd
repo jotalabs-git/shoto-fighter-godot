@@ -258,7 +258,10 @@ func _process(_delta: float) -> void:
 			# avanza a distinta velocidad o queda fuera de sincronía.
 			_sync_grab_sprite(st, a)
 		var sprite_scale := CUSTOM_SPRITE_SCALE if CharacterFrames.has_custom_art(character_id) else LEGACY_SPRITE_SCALE
-		sprite.scale = Vector2(sprite_scale * facing(), sprite_scale)
+		# La orientacion logica (hitboxes, bloqueos, movimiento) siempre mira al rival.
+		# Solo el arte del cantante fue exportado mirando hacia el otro lado.
+		var art_direction: int = CharacterRegistry.art_facing(character_id)
+		sprite.scale = Vector2(sprite_scale * facing() * art_direction, sprite_scale)
 	queue_redraw()
 
 func _sync_grab_sprite(st: String, animation: String) -> void:

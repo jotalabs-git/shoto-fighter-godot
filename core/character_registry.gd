@@ -9,6 +9,7 @@ const ENTRIES := {
 	"guitarist": {"name": "EL GUITARRISTA", "folder": "res://assets/characters/guitarist", "tint": Color(0.72, 0.82, 1.0), "art_facing": 1},
 	"frontman": {"name": "EL FRONTMAN", "folder": "res://assets/characters/frontman", "tint": Color(1.0, 0.86, 0.82), "art_facing": -1},
 	"bruce": {"name": "BRUCE DICKINSON", "folder": "", "tint": Color(0.85, 0.75, 0.66)},
+	"ozzy": {"name": "OZZY OSBOURNE", "folder": "", "tint": Color(0.77, 0.62, 0.96)},
 }
 
 static func display_name(character_id: String) -> String:
@@ -33,3 +34,12 @@ static func art_facing(character_id: String) -> int:
 	if ENTRIES.has(character_id):
 		return int(ENTRIES[character_id].get("art_facing", 1))
 	return 1
+
+## Orden canónico del roster jugable. Cada entrada necesita GLB e idle.
+static func selectable_ids() -> Array[String]:
+	return ["guitarist", "frontman", "ozzy", "bruce"]
+
+static func model_path(character_id: String) -> String:
+	if not selectable_ids().has(character_id):
+		return ""
+	return "res://assets/models/%s.glb" % character_id

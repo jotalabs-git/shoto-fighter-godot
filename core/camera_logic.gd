@@ -12,3 +12,9 @@ static func compute(x1: float, x2: float, view_w: float, min_zoom: float, max_zo
 	var zoom: float = view_w / maxf(needed, 1.0)
 	zoom = clampf(zoom, min_zoom, max_zoom)
 	return [center, zoom]
+
+## Encuadre cinematografico temporario para agarrones confirmados.
+## Sigue el punto medio, pero ignora el limite de zoom del combate
+## normal; no altera la simulacion ni la posicion de los luchadores.
+static func throw_closeup(x1: float, x2: float, zoom: float) -> Array:
+	return [(x1 + x2) / 2.0, maxf(zoom, 1.0)]

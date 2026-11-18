@@ -167,3 +167,59 @@ y `hurt`.
 - G3 · `e8d85ed` · Catálogo completo del Guitarrista.
 - G4 · `d2368c7` · Frontman sobre el rig compartido.
 - G5 · `feat(art): polish and verify both Blender fighters`.
+
+## Rediseño del Guitarrista · Muñeco articulado
+
+- La fuente `tools/blender/sources/guitarist.blend` incluye un rostro
+  modelado de ambos lados, cabello con volumen frontal y posterior,
+  y una figura completa con materiales mate. La chaqueta y el pantalón
+  se deforman por pesos de armadura.
+- La fuente abre en Pose Mode. El esqueleto conserva 15 huesos de la
+  animación original y suma ocho controles manuales (cuatro objetivos
+  y cuatro polos). La prueba de Blender movió las cuatro cadenas IK
+  y comprobó el seguimiento de manos y pies.
+- `tools/blender/run.sh generate guitarist --full` y `render guitarist`
+  reexportaron 113 PNG en 26 acciones. El validador comprobó transparencia,
+  encuadre y catálogo completo. Tras ajustar la vista inicial de Blender,
+  se reprodujeron 12 PNG de guardia, golpe y caída byte por byte.
+- `bash scripts/check-linux.sh` aprobó 103 tests. El smoke gráfico en
+  Godot comprobó la caminata, el golpe y la reacción de ambos personajes.
+  Las vistas de frente, tres cuartos y espalda, el esqueleto y la
+  captura de combate están en `reports/character-art/guitarist-sculpt/`.
+
+### Guantes y arnés de guitarra
+
+El Guitarrista lleva guantes de boxeo de cuero color ciruela, con pulgar
+y puño acolchado. La guitarra va en la espalda en un arnés de dos tiras.
+El especial `palm` ahora se lee como un empuje de ambos puños.
+Se conservaron los tiempos y el encuadre del juego.
+
+Se regeneró el .blend y el validador aprobó los **113 PNG de 26 acciones**.
+La prueba de Blender confirmó las cuatro cadenas IK. Se revisaron
+guardia, jab, especial y caída, y las vistas de estudio en
+`reports/character-art/guitarist-gloves/`.
+La última corrida de `bash scripts/check-linux.sh` aprobó **103 pruebas**.
+El smoke gráfico confirmó caminata, pose de impacto, hitstop y reacción
+en la escena de dos jugadores.
+
+### Dirección de arte · Rock callejero
+
+Se esculpió un mechón grueso hacia adelante sobre un lateral rebajado,
+con ceja alzada, párpados pesados, sonrisa torcida y barba corta.
+La chaqueta es más corta, con cierre diagonal y una sola hombrera violeta.
+La hombrera y los guantes tienen marcas suaves de huella en el material.
+La guardia carga la pierna trasera y mantiene un guante alto.
+
+Primero se renderizó solo `idle`. Se comprobó su lectura en una copia del
+escenario a 384 × 216 y se comparó con la versión anterior. Con esa vista
+revisada se exportó el catálogo completo. El encuadre, el eje y las
+duraciones del manifiesto se conservaron. Las cuatro cadenas IK
+se calibraron y probaron desde la nueva guardia.
+
+Evidencias en `reports/character-art/guitarist-style/` con vistas
+de estudio, comparación a resolución nativa y hoja de poses.
+
+El validador aprobó 113 PNG en 26 acciones y `scripts/check-linux.sh`
+aprobó las 103 pruebas. El smoke gráfico final a 384 × 216 verificó
+caminata, jab, hitstop y reacción. La comparación final está en
+`guitarist-style/comparativa-384.png` (antes a la izquierda).

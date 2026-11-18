@@ -49,6 +49,15 @@ FRONT = {
     "elbow_far": (.01, .39, 1.57), "hand_far": (.50, .28, 2.00),
     "foot_near": (.45, -.19, .15), "knee_near": (.37, -.20, .68),
 }
+GUITAR_GUARD = {
+    "hips": (-.23, .015, 1.20), "neck": (.008, -.025, 1.91), "head": (.232, -.045, 2.523),
+    "shoulder_near": (.078, -.337, 1.786), "elbow_near": (.245, -.455, 1.641),
+    "hand_near": (.476, -.477, 1.988),
+    "shoulder_far": (-.123, .266, 1.813), "elbow_far": (.026, .342, 1.489),
+    "hand_far": (.334, .286, 1.646),
+    "knee_near": (.217, -.185, .682), "foot_near": (.373, -.213, .15),
+    "knee_far": (-.333, .183, .696), "foot_far": (-.553, .220, .15),
+}
 
 
 def shifted(pose, dz):
@@ -129,7 +138,7 @@ def fallen(vocalist):
 
 def actions(character, full):
     vocalist = character == "frontman"
-    base = dict(STANCE, **(FRONT if vocalist else {}))
+    base = dict(STANCE, **(FRONT if vocalist else GUITAR_GUARD))
     bob = shifted(base, .04 if vocalist else .025)
     for key in ("foot_near", "foot_far"):
         bob[key] = base[key]
@@ -145,6 +154,11 @@ def actions(character, full):
     if vocalist:
         bob["hand_far"] = (.52, .10, 2.05)
         result["idle"] = [(5, base), (4, bob), (5, base), (4, result["idle"][-1][1])]
+    else:
+        bob["hand_near"] = (.505, -.498, 2.032)
+        downbeat = result["idle"][-1][1]
+        downbeat["head"] = (.260, -.049, 2.498)
+        downbeat["hand_near"] = (.447, -.471, 1.948)
     if not full:
         return result
 
@@ -200,11 +214,8 @@ def actions(character, full):
                                    hand_near=(1.13, -.42, 1.70), elbow_near=(.69, -.47, 1.63),
                                    elbow_far=(.38, .33, 1.68), hand_far=(.56, .10, 2.18)))
     else:
-        result["palm"][2] = (5, dict(base, hand_near=(-.26, -.65, 1.30), elbow_near=(-.36, -.45, 1.56),
-                                   hand_far=(.76, .27, 1.76), instrument_tip=(.17, 0, 1.97)))
-        for index, tip in ((1, (-.24, 0, 1.94)), (2, (-.14, 0, 1.95))):
-            duration, pose = result["upper"][index]
-            result["upper"][index] = (duration, dict(pose, instrument_tip=tip))
+        result["palm"][2] = (5, dict(base, hand_near=(1.03, -.51, 1.72), elbow_near=(.61, -.48, 1.63),
+                                   hand_far=(1.09, .23, 1.75), elbow_far=(.64, .30, 1.65)))
     return result
 
 
@@ -224,6 +235,4 @@ def points(joints, name):
         end = tuple(a + b for a, b in zip(root, direction))
     else:
         end = joints[end]
-    if name == "instrument" and "instrument_tip" in joints:
-        end = joints["instrument_tip"]
     return root, end

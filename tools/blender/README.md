@@ -58,6 +58,20 @@ Los efectos, hitboxes y tiempos lógicos pertenecen al motor de combate.
 
 ## Revisión
 
+### Posar el Guitarrista en Blender
+
+La fuente del Guitarrista se abre en Pose Mode. En **Object Properties →
+Custom Properties** del objeto `Rig`, poné `IK_hands` o `IK_feet` en 1 para
+posar brazos o piernas. En la vista 3D, mové los controles azules para
+colocar manos y pies. Los verdes orientan codos y rodillas. La chaqueta y
+el pantalón tienen pesos de deformación en hombros, codos, caderas y
+rodillas. La guitarra tiene su propio hueso.
+
+Volvé a 0 para editar o reproducir la acción original. El exportador
+desactiva estos controles en memoria al renderizar las acciones del juego.
+
+### Ver los sprites en juego
+
 ```bash
 python3 tools/blender/contact_sheet.py assets/characters/guitarist \
   reports/character-art/guitarist.png idle:0 walk_fwd:2 stand_lp:1 hurt:0

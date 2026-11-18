@@ -15,6 +15,7 @@ from mathutils import Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import ASSETS, REFERENCE, SOURCES, blender_args, read_json, write_json
 from png import strip_text_metadata
+from pose_controls import IK_PROPERTIES
 from validate_character import validate
 
 
@@ -25,6 +26,10 @@ def export(args):
     bpy.ops.wm.open_mainfile(filepath=str(source))
     scene = bpy.context.scene
     rig = bpy.data.objects["Rig"]
+    for property_name in IK_PROPERTIES:
+        if property_name in rig:
+            rig[property_name] = 0.0
+    rig.update_tag(refresh={"OBJECT"})
     catalog = json.loads(scene["sprite_catalog"])
     selected = args.actions or list(catalog)
     unknown = set(selected) - catalog.keys()

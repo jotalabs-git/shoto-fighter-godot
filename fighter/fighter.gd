@@ -64,6 +64,8 @@ var hitstop_frames: int = 0
 var blockstun_frames: int = 0
 var knockdown_frames: int = 0
 var throw_pressed: bool = false
+var throw_victim: Fighter = null
+var throw_direction: int = 1
 var invuln_frames: int = 0
 var combo_count: int = 0
 var frozen: bool = false
@@ -152,8 +154,10 @@ func _sprite_anim(st: String) -> String:
 			return "guard_crouch" if input.down else "guard"
 		"Hitstun":
 			return "hurt"
-		"Knockdown", "Thrown":
+		"Knockdown":
 			return "knockdown"
+		"Thrown":
+			return "hurt"
 		"Throw":
 			return "throw"
 		_:
@@ -196,6 +200,9 @@ func _process(_delta: float) -> void:
 			sy = 0.88
 		"Knockdown":
 			rot = deg_to_rad(78.0)
+		"Thrown":
+			rot = deg_to_rad(-10.0)
+			offx = -3.0
 		"Hitstun":
 			offx = -7.0          # recoil: empujado hacia atrás
 			rot = deg_to_rad(-8.0)
@@ -242,9 +249,29 @@ func _process(_delta: float) -> void:
 			var authored_phases: Dictionary = sprite.sprite_frames.get_meta("attack_phases", {})
 			if authored_phases.has(a):
 				_sync_attack_sprite(a, authored_phases[a])
+		elif st == "Throw" or st == "Thrown":
+			# El estado físico controla el fotograma: ninguna de las dos poses
+			# avanza a distinta velocidad o queda fuera de sincronía.
+			_sync_grab_sprite(st, a)
 		var sprite_scale := CUSTOM_SPRITE_SCALE if CharacterFrames.has_custom_art(character_id) else LEGACY_SPRITE_SCALE
 		sprite.scale = Vector2(sprite_scale * facing(), sprite_scale)
 	queue_redraw()
+
+func _sync_grab_sprite(st: String, animation: String) -> void:
+	if not sprite.sprite_frames.has_animation(animation):
+		return
+	var count := sprite.sprite_frames.get_frame_count(animation)
+	if count <= 0:
+		return
+	sprite.pause()
+	var tick: int = state_machine.current_state.state_frame
+	var index := 0
+	if st == "Throw":
+		index = mini(int(float(tick) * float(count) / 20.0), count - 1)
+	else:
+		# Primer gesto de recepción y luego postura sostenida.
+		index = mini(int(float(tick) * float(count) / 24.0), count - 1)
+	sprite.set_frame_and_progress(index, 0.0)
 
 func _sync_attack_sprite(animation: String, markers: Vector2i) -> void:
 	# Fit authored pose intervals to the current move, including aliases and hitstop.
@@ -522,13 +549,31 @@ func is_throwable() -> bool:
 
 func do_throw(victim: Fighter) -> void:
 	current_move = null
+	throw_victim = victim
+	throw_direction = facing()
 	state_machine.transition_to("Throw")
-	victim.get_thrown(facing())
+	victim.get_thrown(throw_direction)
 
 func get_thrown(thrower_facing: int) -> void:
-	health = max(health - THROW_DAMAGE, 0)
+	# La sujeción es visual y sin daño; se aplica exactamente una vez
+	# al liberar al rival, sincronizado con el golpe de la animación.
+	throw_direction = thrower_facing
+	vel = Vector2.ZERO
+	state_machine.transition_to("Thrown")
+
+func release_throw_victim() -> void:
+	if throw_victim == null:
+		return
+	var victim := throw_victim
+	throw_victim = null
+	victim.release_thrown()
+
+func release_thrown() -> void:
+	if state_machine.current_state == null or state_machine.current_state.name != "Thrown":
+		return
+	health = maxi(health - THROW_DAMAGE, 0)
 	knockdown_frames = KNOCKDOWN_FRAMES
-	vel = Vector2(thrower_facing * 120.0, 0.0)
+	vel = Vector2(float(throw_direction) * 120.0, 0.0)
 	state_machine.transition_to("Knockdown")
 
 func throw_tech() -> void:
@@ -545,6 +590,8 @@ func reset_for_round(pos: Vector2, faces_right: bool) -> void:
 	hitstun_frames = 0
 	blockstun_frames = 0
 	knockdown_frames = 0
+	throw_victim = null
+	throw_direction = 1
 	hitstop_frames = 0
 	invuln_frames = 0
 	combo_count = 0

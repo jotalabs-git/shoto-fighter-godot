@@ -8,7 +8,9 @@ Godot utiliza las plantillas oficiales de exportación de Windows.
 
 1. Editor Godot 4 compatible con este proyecto (actualmente Godot 4.7.x).
 2. Plantillas de exportación de la **misma versión exacta** que el editor.
-   En Godot: **Editor → Manage Export Templates → Download and Install**.
+   **El comando `make windows` las descarga automáticamente** desde el sitio
+   oficial cuando faltan. También se pueden instalar mediante Godot:
+   **Editor → Manage Export Templates → Download and Install**.
 3. `make` y `bash` disponibles en Linux. No se necesita Python, Blender
    ni Windows para empaquetar los modelos GLB ya incluidos.
 
@@ -18,10 +20,13 @@ Godot utiliza las plantillas oficiales de exportación de Windows.
 make windows
 ```
 
-También existe:
+También existen:
 
 ```bash
 make windows-debug
+
+# Solo instala las plantillas Windows necesarias:
+make windows-setup
 ```
 
 Y para verificar el juego local antes de exportar:
@@ -101,3 +106,29 @@ en Windows: el comando verifica el empaquetado, no la ejecución en destino.
 Referencias oficiales:
 - https://docs.godotengine.org/en/4.7/tutorials/export/exporting_projects.html
 - https://docs.godotengine.org/en/4.7/tutorials/export/exporting_for_windows.html
+
+## Instalación automática (Godot 4.7.2)
+
+Si `godot --version` devuelve
+`4.7.2.stable.official.ed1daf0bf`, la carpeta correcta es
+`~/.local/share/godot/export_templates/4.7.2.stable/` **sin** el hash
+`.official.ed1daf0bf`. El script reconoce ese formato y descarga
+el archivo TPZ oficial correspondiente a Godot **4.7.2-stable** desde
+`https://downloads.godotengine.org/`, extrayendo únicamente:
+
+- `windows_debug_x86_64.exe`
+- `windows_release_x86_64.exe`
+
+Las plantillas instaladas se reutilizan en exportaciones posteriores.
+Si preferís instalar manualmente:
+
+```bash
+GODOT_AUTO_TEMPLATES=0 make windows
+# O descargá el TPZ desde godotengine.org y ejecutá:
+python3 scripts/install-windows-templates.py "$(godot --version)" --archive /ruta/descarga.tpz
+make windows
+```
+
+El paquete oficial completo puede ser grande; la instalación automática
+usa un archivo temporal y lo elimina tras extraer las plantillas.
+El script necesita Python 3 y conexión a Internet solamente la primera vez.

@@ -36,16 +36,20 @@ version="$("$ENGINE" --version)"
 echo "Godot: $version"
 echo "Plataforma de exportación: Windows Desktop x86_64 ($MODE)"
 
-# Official templates must have the same version as the editor.
-# Different distributions can choose custom data paths, so let Godot validate
-# the templates and report its own precise error instead of guessing paths.
-template_version="${version%.official}"
-if [[ ! -d "$HOME/.local/share/godot/export_templates/$template_version" ]]; then
-  echo "AVISO: No se detectaron plantillas en ~/.local/share/godot/export_templates/$template_version."
-  echo "       Si la exportación falla, abrí Godot > Editor > Manage Export Templates"
-  echo "       e instalá la versión EXACTA que informa: $version"
+# Templates must match the editor's release version (exclude .official/hash).
+# Download the official TPZ when missing, unless the user opts out.
+version_folder="$(printf '%s\n' "$version" | sed -E 's/\.official(\..*)?$//')"
+templates_base="${XDG_DATA_HOME:-$HOME/.local/share}/godot/export_templates"
+if [[ ! -s "$templates_base/$version_folder/windows_debug_x86_64.exe" ||
+      ! -s "$templates_base/$version_folder/windows_release_x86_64.exe" ]]; then
+  if [[ "${GODOT_AUTO_TEMPLATES:-1}" == "0" ]]; then
+    echo "ERROR: Faltan plantillas Windows para $version_folder." >&2
+    echo "Instalalas con: make windows-setup" >&2
+    exit 1
+  fi
+  echo "Instalando automáticamente las plantillas Windows ($version_folder)..."
+  python3 scripts/install-windows-templates.py "$version"
 fi
-
 mkdir -p export/windows
 
 echo "Importando GLB, texturas, fuentes y recursos..."

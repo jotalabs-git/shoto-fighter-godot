@@ -5,14 +5,14 @@ extends Node2D
 ## pushbox, resolución de golpes (hitbox↔hurtbox) y cámara.
 ## (Rounds, timer, HUD y KO llegan en la Fase 6.)
 
-@export var stage_left: float = 40.0
-@export var stage_right: float = 344.0
+@export var stage_left: float = -32.0
+@export var stage_right: float = 416.0
 @export var pushbox_min_sep: float = 44.0
 @export var throw_range: float = 60.0
 @export var view_width: float = 384.0
-@export var cam_min_zoom: float = 0.8
+@export var cam_min_zoom: float = 0.72
 @export var cam_max_zoom: float = 1.1
-@export var cam_margin: float = 130.0
+@export var cam_margin: float = 105.0
 @export var p2_is_cpu: bool = false
 @export var cpu_difficulty: String = "medium"
 
@@ -106,8 +106,8 @@ func _physics_process(delta: float) -> void:
 		_reset_round()
 
 func _reset_round() -> void:
-	p1.reset_for_round(Vector2(130.0, 180.0), true)
-	p2.reset_for_round(Vector2(254.0, 180.0), false)
+	p1.reset_for_round(Vector2(112.0, 180.0), true)
+	p2.reset_for_round(Vector2(272.0, 180.0), false)
 	for proj in get_tree().get_nodes_in_group("projectile"):
 		proj.queue_free()
 
@@ -147,7 +147,7 @@ func _spawn_spark(pos: Vector2) -> void:
 func _process_projectiles(delta: float) -> void:
 	for proj in get_tree().get_nodes_in_group("projectile"):
 		proj.position.x += proj.velocity_x * delta
-		if proj.position.x < -40.0 or proj.position.x > view_width + 40.0:
+		if proj.position.x < stage_left - 80.0 or proj.position.x > stage_right + 80.0:
 			proj.queue_free()
 			continue
 		for f in [p1, p2]:

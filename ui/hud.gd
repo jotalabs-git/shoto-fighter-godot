@@ -6,10 +6,10 @@ extends CanvasLayer
 
 const BAR_W := 162.0
 const P2_BAR_LEFT := 211.0
-const P1_COLOR := Color(0.26, 0.82, 0.94)
-const P2_COLOR := Color(0.97, 0.31, 0.44)
-const DANGER_COLOR := Color(1.0, 0.77, 0.28)
-const CRITICAL_COLOR := Color(1.0, 0.31, 0.36)
+const P1_COLOR := RockBrand.NEON_BLUE
+const P2_COLOR := RockBrand.ROCK_RED
+const DANGER_COLOR := RockBrand.AMP_YELLOW
+const CRITICAL_COLOR := RockBrand.ROCK_RED
 
 @onready var p1_name: Label = $P1Name
 @onready var p2_name: Label = $P2Name
@@ -24,12 +24,23 @@ const CRITICAL_COLOR := Color(1.0, 0.31, 0.36)
 var p1: Fighter
 var p2: Fighter
 
+func _ready() -> void:
+	var ui_font := RockBrand.font_file("ui")
+	var impact_font := RockBrand.font_file("impact")
+	if ui_font != null:
+		for label in [p1_name, p2_name, timer_label, p1_pips, p2_pips, $P1Tag, $P2Tag, $Brand]:
+			label.add_theme_font_override("font", ui_font)
+	if impact_font != null:
+		msg_label.add_theme_font_override("font", impact_font)
+		msg_shadow.add_theme_font_override("font", impact_font)
+
+
 func set_timer(seconds: int) -> void:
 	if timer_label == null:
 		return
 	timer_label.text = str(seconds)
 	timer_label.add_theme_color_override(
-		"font_color", CRITICAL_COLOR if seconds <= 10 else Color(1.0, 0.88, 0.65)
+		"font_color", CRITICAL_COLOR if seconds <= 10 else RockBrand.AMP_YELLOW
 	)
 
 func set_rounds(a: int, b: int) -> void:

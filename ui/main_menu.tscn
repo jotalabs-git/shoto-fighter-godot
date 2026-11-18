@@ -14,56 +14,123 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.075, 0.083, 0.117, 1)
+mouse_filter = 2
+color = Color(0.043, 0.043, 0.071, 1)
 
-[node name="Title" type="Label" parent="."]
-offset_left = 42.0
+[node name="StageGlow" type="ColorRect" parent="."]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 384.0
+offset_bottom = 68.0
+mouse_filter = 2
+color = Color(0.16, 0.065, 0.18, 0.75)
+
+[node name="TopAccent" type="ColorRect" parent="."]
+offset_top = 0.0
+offset_right = 384.0
+offset_bottom = 2.0
+mouse_filter = 2
+color = Color(1, 0, 0.235, 1)
+
+[node name="LeftLight" type="ColorRect" parent="."]
+offset_left = 29.0
 offset_top = 20.0
-offset_right = 342.0
-offset_bottom = 44.0
-theme_override_font_sizes/font_size = 22
-horizontal_alignment = 1
-text = "ROCK KOMBAT"
+offset_right = 32.0
+offset_bottom = 60.0
+mouse_filter = 2
+color = Color(0, 0.898, 1, 0.8)
+
+[node name="RightLight" type="ColorRect" parent="."]
+offset_left = 352.0
+offset_top = 20.0
+offset_right = 355.0
+offset_bottom = 60.0
+mouse_filter = 2
+color = Color(0.8, 0, 1, 0.8)
+
+[node name="TitleRock" type="Label" parent="."]
+offset_left = 47.0
+offset_top = 12.0
+offset_right = 192.0
+offset_bottom = 45.0
+theme_override_colors/font_color = Color(0, 0.898, 1, 1)
+theme_override_colors/font_shadow_color = Color(0.04, 0.015, 0.10, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 27
+horizontal_alignment = 2
+text = "ROCK"
+
+[node name="TitleKombat" type="Label" parent="."]
+offset_left = 194.0
+offset_top = 12.0
+offset_right = 339.0
+offset_bottom = 45.0
+theme_override_colors/font_color = Color(1, 0, 0.235, 1)
+theme_override_colors/font_shadow_color = Color(0.04, 0.015, 0.10, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 27
+text = "KOMBAT"
 
 [node name="Subtitle" type="Label" parent="."]
-offset_left = 42.0
-offset_top = 46.0
-offset_right = 342.0
+offset_left = 40.0
+offset_top = 47.0
+offset_right = 344.0
 offset_bottom = 60.0
-theme_override_colors/font_color = Color(0.6, 0.65, 0.8, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.78, 0.79, 0.82, 1)
+theme_override_font_sizes/font_size = 9
 horizontal_alignment = 1
-text = "El Guitarrista  vs  El Frontman"
+text = "EL GUITARRISTA   VS   EL FRONTMAN"
+
+[node name="Divider" type="ColorRect" parent="."]
+offset_top = 65.0
+offset_right = 384.0
+offset_bottom = 66.0
+mouse_filter = 2
+color = Color(0.8, 0, 1, 0.9)
+
+[node name="LeftPulse" type="ColorRect" parent="."]
+offset_left = 30.0
+offset_top = 76.0
+offset_right = 31.0
+offset_bottom = 185.0
+mouse_filter = 2
+color = Color(0, 0.898, 1, 0.45)
+
+[node name="RightPulse" type="ColorRect" parent="."]
+offset_left = 353.0
+offset_top = 76.0
+offset_right = 354.0
+offset_bottom = 185.0
+mouse_filter = 2
+color = Color(1, 0, 0.235, 0.45)
 
 [node name="VBox" type="VBoxContainer" parent="."]
-offset_left = 102.0
-offset_top = 72.0
-offset_right = 282.0
-offset_bottom = 200.0
-theme_override_constants/separation = 5
+offset_left = 99.0
+offset_top = 79.0
+offset_right = 285.0
+offset_bottom = 191.0
+theme_override_constants/separation = 3
 
 [node name="Btn2P" type="Button" parent="VBox"]
-theme_override_font_sizes/font_size = 13
-text = "2 Players"
+text = "VERSUS LOCAL"
 
 [node name="BtnEasy" type="Button" parent="VBox"]
-theme_override_font_sizes/font_size = 13
-text = "vs CPU - Easy"
+text = "CPU  /  FACIL"
 
 [node name="BtnMedium" type="Button" parent="VBox"]
-theme_override_font_sizes/font_size = 13
-text = "vs CPU - Medium"
+text = "CPU  /  NORMAL"
 
 [node name="BtnHard" type="Button" parent="VBox"]
-theme_override_font_sizes/font_size = 13
-text = "vs CPU - Hard"
+text = "CPU  /  DIFICIL"
 
 [node name="Hint" type="Label" parent="."]
 offset_left = 42.0
-offset_top = 196.0
+offset_top = 197.0
 offset_right = 342.0
-offset_bottom = 210.0
-theme_override_colors/font_color = Color(0.45, 0.48, 0.6, 1)
-theme_override_font_sizes/font_size = 9
+offset_bottom = 211.0
+theme_override_colors/font_color = Color(0.56, 0.54, 0.62, 1)
+theme_override_font_sizes/font_size = 8
 horizontal_alignment = 1
-text = "F1: cajas   ·   Esc: menu"
+text = "F1: HITBOXES    /    ESC: MENU"

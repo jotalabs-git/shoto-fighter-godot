@@ -68,7 +68,16 @@ func play_announcer(event: String) -> void:
 func _play(key: String, volume: float = 0.0) -> void:
 	if _players.is_empty():
 		return
-	var sample: AudioStream = _bank.get(key)
+	var variant_key := key
+	# Alterna fuentes Kenney / Independent.nu / Sonniss cuando estén instaladas.
+	var choices: Array[String] = [key]
+	for suffix in ["_oga", "_sonniss"]:
+		if _bank.has(key + suffix):
+			choices.append(key + suffix)
+	if choices.size() > 1:
+		var choice := _variation % choices.size()
+		variant_key = choices[choice]
+	var sample: AudioStream = _bank.get(variant_key)
 	if sample == null:
 		return
 	# Buscar una voz libre primero, luego robar la más antigua si hay saturación.
@@ -122,8 +131,12 @@ func _register(key: String, frequency: float, duration: float, noise: float, wei
 	var stream := _load_audio(key)
 	if stream != null:
 		_bank[key] = stream
-		return
-	_bank[key] = _synthesize(frequency, duration, noise, weight, seed, voiced)
+	else:
+		_bank[key] = _synthesize(frequency, duration, noise, weight, seed, voiced)
+	for suffix in ["_oga", "_sonniss"]:
+		var alternative := _load_audio(key + suffix)
+		if alternative != null:
+			_bank[key + suffix] = alternative
 
 static func _load_audio(key: String) -> AudioStream:
 	# Versiones locales y seleccionadas primero; luego banco incluido CC0.

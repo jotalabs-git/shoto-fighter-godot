@@ -27,8 +27,7 @@ static func button_style(focused: bool = false) -> StyleBoxFlat:
 	style.content_margin_bottom = 3.0
 	return style
 
-## Las fuentes son opcionales hasta ejecutar scripts/install_fonts.py.
-## El fallback nativo permite abrir el proyecto aun sin descargar binarios.
+## El fallback nativo permite abrir el proyecto si faltan los TTF incluidos.
 static var _font_cache: Dictionary = {}
 
 static func font_file(role: String) -> Font:

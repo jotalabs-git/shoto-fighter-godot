@@ -17,5 +17,10 @@ and bundled with the **M.U.G.E.N** engine. The sprites were extracted from the K
   separate (`assets/kfm/` + `core/kfm_frames.gd`), so it's a drop-in replacement that
   won't touch the gameplay code or break the tests.
 
+## Typography
+Metal Mania, Bangers, and Oxanium are distributed under the SIL Open Font
+License 1.1. The [font directory](assets/fonts/README.md) records their
+provenance and includes the copyright notices and full licenses.
+
 ## Test framework
 **gdUnit4** by Mike Schulze (MIT license), bundled in `addons/gdUnit4/`.

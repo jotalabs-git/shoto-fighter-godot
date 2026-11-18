@@ -33,45 +33,72 @@ func _ready() -> void:
 	_refresh_all()
 
 func _construct() -> void:
+	# Diseño basado en el lienzo lógico 384x216. Los retratos no invaden el roster.
 	var bg := ColorRect.new()
 	bg.color = BG
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_label("ROCK KOMBAT", Vector2(0, 3), Vector2(384, 23), 18, GOLD, HORIZONTAL_ALIGNMENT_CENTER)
-	_label("ELEGÍ TU LUCHADOR", Vector2(0, 25), Vector2(384, 14), 9, MUTED, HORIZONTAL_ALIGNMENT_CENTER)
-	_label("P1", Vector2(11, 42), Vector2(100, 16), 12, CYAN)
-	_label("CPU" if _is_cpu else "P2", Vector2(273, 42), Vector2(100, 16), 12, PINK, HORIZONTAL_ALIGNMENT_RIGHT)
+	_panel(Vector2(0, 0), Vector2(384, 2), RockBrand.ROCK_RED)
+	_panel(Vector2(0, 39), Vector2(384, 1), RockBrand.STAGE_MAGENTA)
+	_panel(Vector2(0, 202), Vector2(384, 1), Color("#51304B"))
+	_panel(Vector2(1, 51), Vector2(124, 118), Color("#151828"))
+	_panel(Vector2(259, 51), Vector2(124, 118), Color("#151828"))
+	_panel(Vector2(130, 51), Vector2(124, 118), Color("#181321"))
+
+	_label("ROCK", Vector2(71, 4), Vector2(121, 27), 23, CYAN, HORIZONTAL_ALIGNMENT_RIGHT, "display")
+	_label("KOMBAT", Vector2(195, 4), Vector2(126, 27), 23, RockBrand.ROCK_RED, HORIZONTAL_ALIGNMENT_LEFT, "display")
+	_label("ELIGI TU LUCHADOR", Vector2(95, 32), Vector2(194, 11), 9, GOLD, HORIZONTAL_ALIGNMENT_CENTER, "impact")
+
+	_label("P1", Vector2(5, 41), Vector2(120, 12), 12, CYAN, HORIZONTAL_ALIGNMENT_LEFT, "impact")
+	_label("CPU" if _is_cpu else "P2", Vector2(259, 41), Vector2(120, 12), 12, PINK, HORIZONTAL_ALIGNMENT_RIGHT, "impact")
 
 	for side in 2:
-		var x := 5.0 if side == 0 else 259.0
-		_panel(Vector2(x, 58), Vector2(120, 112), Color("#181A2D"))
-		_add_preview(side, Vector2(x + 1.0, 59.0))
-		var name := _label("", Vector2(x, 172), Vector2(120, 15), 9, CYAN if side == 0 else PINK, HORIZONTAL_ALIGNMENT_CENTER)
+		var x := 2.0 if side == 0 else 260.0
+		_add_preview(side, Vector2(x + 1.0, 52.0))
+		var name := _label("", Vector2(x, 170), Vector2(122, 16), 10, CYAN if side == 0 else PINK, HORIZONTAL_ALIGNMENT_CENTER, "impact")
 		_names.append(name)
-		var status := _label("", Vector2(x, 188), Vector2(120, 13), 8, MUTED, HORIZONTAL_ALIGNMENT_CENTER)
+		var status := _label("", Vector2(x, 185), Vector2(122, 12), 7, MUTED, HORIZONTAL_ALIGNMENT_CENTER)
 		_status.append(status)
 
-	_label("SELECCIÓN", Vector2(131, 43), Vector2(122, 15), 10, WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+	_label("ROSTER", Vector2(132, 47), Vector2(120, 13), 11, WHITE, HORIZONTAL_ALIGNMENT_CENTER, "impact")
 	for index in _ids.size():
-		var b := Button.new()
-		b.text = CharacterRegistry.display_name(_ids[index]).replace("EL ", "").replace(" DICKINSON", "")
-		b.position = Vector2(133.0 + float(index % 2) * 62.0, 64.0 + float(index / 2) * 52.0)
-		b.size = Vector2(59, 49)
-		b.add_theme_font_size_override("font_size", 9)
-		b.add_theme_color_override("font_color", WHITE)
-		b.add_theme_stylebox_override("normal", RockBrand.button_style())
-		b.add_theme_stylebox_override("hover", RockBrand.button_style(true))
-		b.pressed.connect(_pick_card.bind(index))
-		add_child(b)
-		_cards.append(b)
-	_hints = _label("", Vector2(7, 202), Vector2(370, 13), 8, MUTED, HORIZONTAL_ALIGNMENT_CENTER)
+		var button := Button.new()
+		button.position = Vector2(133.0 + float(index % 2) * 61.0, 68.0 + float(index / 2) * 47.0)
+		button.size = Vector2(57, 43)
+		button.custom_minimum_size = Vector2.ZERO
+		button.clip_text = true
+		button.add_theme_font_size_override("font_size", 7)
+		var ui_font := RockBrand.font_file("ui")
+		if ui_font != null:
+			button.add_theme_font_override("font", ui_font)
+		button.add_theme_color_override("font_color", WHITE)
+		button.add_theme_color_override("font_hover_color", GOLD)
+		button.add_theme_stylebox_override("hover", _card_style(GOLD, true))
+		button.add_theme_stylebox_override("pressed", _card_style(GOLD, true))
+		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+		button.pressed.connect(_pick_card.bind(index))
+		add_child(button)
+		_cards.append(button)
+	_label("P1: WASD + U   P2: FLECHAS + ,", Vector2(54, 202), Vector2(276, 13), 7, MUTED, HORIZONTAL_ALIGNMENT_CENTER)
+	_hints = _label("", Vector2(30, 191), Vector2(324, 11), 7, MUTED, HORIZONTAL_ALIGNMENT_CENTER)
+
+func _card_style(color: Color, selected: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("#30243C") if selected else Color("#202032")
+	style.border_color = color
+	style.set_border_width_all(2 if selected else 1)
+	style.set_corner_radius_all(3)
+	style.content_margin_left = 2.0
+	style.content_margin_right = 2.0
+	style.content_margin_top = 1.0
+	style.content_margin_bottom = 1.0
+	return style
 
 func _add_preview(side: int, at: Vector2) -> void:
 	var holder := SubViewportContainer.new()
 	holder.position = at
-	holder.size = Vector2(118, 110)
+	holder.size = Vector2(120, 114)
 	holder.stretch = true
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(holder)
@@ -116,13 +143,17 @@ func _add_preview(side: int, at: Vector2) -> void:
 			light.rotation_degrees = Vector3(-20, 120, 0)
 		vp.add_child(light)
 
-func _label(value: String, pos: Vector2, dimensions: Vector2, font_size: int, color: Color, horizontal: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
+func _label(value: String, pos: Vector2, dimensions: Vector2, font_size: int, color: Color, horizontal: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT, font_role: String = "ui") -> Label:
 	var label := Label.new()
 	label.text = value
 	label.position = pos
 	label.size = dimensions
 	label.horizontal_alignment = horizontal
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.clip_text = true
+	var font := RockBrand.font_file(font_role)
+	if font != null:
+		label.add_theme_font_override("font", font)
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -174,22 +205,17 @@ func _refresh_all() -> void:
 		_status[side].text = "CPU / ALEATORIO" if side == 1 and _is_cpu else ("LISTO" if _confirmed[side] else "ELEGIR + CONFIRMAR")
 		_load_preview(side)
 	_update_cards()
-	_hints.text = "P1 WASD + U  /  P2 FLECHAS + ,  /  ESC VOLVER" if not _is_cpu else "WASD CAMBIAR  ·  U CONFIRMAR  ·  ESC VOLVER"
+	_hints.text = "ESC: VOLVER / DESCONFIRMAR" if not _is_cpu else "WASD CAMBIAR  ·  U CONFIRMAR  ·  ESC VOLVER"
 
 func _update_cards() -> void:
 	for i in _cards.size():
 		var p1 := _indices[0] == i
 		var p2 := _indices[1] == i
-		var marker := ("1" if p1 else "") + ("2" if p2 else "")
-		_cards[i].text = CharacterRegistry.display_name(_ids[i]).replace("EL ", "").replace(" DICKINSON", "") + ("  [" + marker + "]" if marker != "" else "")
+		var short_name: String = ["GUITARRA", "FRONTMAN", "OZZY", "BRUCE"][i] if i < 4 else _ids[i].to_upper()
+		_cards[i].text = short_name + ("  1+2" if p1 and p2 else "  P1" if p1 else "  P2" if p2 else "")
 		var accent := GOLD if p1 and p2 else CYAN if p1 else PINK if p2 else MUTED
 		_cards[i].add_theme_color_override("font_color", accent if p1 or p2 else WHITE)
-		var style := StyleBoxFlat.new()
-		style.bg_color = Color("#292238") if p1 or p2 else Color("#1C2030")
-		style.border_color = accent
-		style.set_border_width_all(2 if p1 or p2 else 1)
-		style.set_corner_radius_all(4)
-		_cards[i].add_theme_stylebox_override("normal", style)
+		_cards[i].add_theme_stylebox_override("normal", _card_style(accent, p1 or p2))
 
 func _random_cpu() -> void:
 	var alternatives := _ids.size() - 1

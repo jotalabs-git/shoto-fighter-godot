@@ -39,8 +39,9 @@ echo "Plataforma de exportación: Windows Desktop x86_64 ($MODE)"
 # Official templates must have the same version as the editor.
 # Different distributions can choose custom data paths, so let Godot validate
 # the templates and report its own precise error instead of guessing paths.
-if [[ ! -d "$HOME/.local/share/godot/export_templates/$version" ]]; then
-  echo "AVISO: No se detectaron plantillas en ~/.local/share/godot/export_templates/$version."
+template_version="${version%.official}"
+if [[ ! -d "$HOME/.local/share/godot/export_templates/$template_version" ]]; then
+  echo "AVISO: No se detectaron plantillas en ~/.local/share/godot/export_templates/$template_version."
   echo "       Si la exportación falla, abrí Godot > Editor > Manage Export Templates"
   echo "       e instalá la versión EXACTA que informa: $version"
 fi

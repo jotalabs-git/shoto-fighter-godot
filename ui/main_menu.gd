@@ -9,7 +9,17 @@ func _ready() -> void:
 	$VBox/BtnHard.pressed.connect(_start.bind(true, "hard"))
 
 func _apply_brand() -> void:
+	var display_font := RockBrand.font_file("display")
+	if display_font != null:
+		$TitleRock.add_theme_font_override("font", display_font)
+		$TitleKombat.add_theme_font_override("font", display_font)
+	var ui_font := RockBrand.font_file("ui")
+	if ui_font != null:
+		$Subtitle.add_theme_font_override("font", ui_font)
+		$Hint.add_theme_font_override("font", ui_font)
 	for button in [$VBox/Btn2P, $VBox/BtnEasy, $VBox/BtnMedium, $VBox/BtnHard]:
+		if ui_font != null:
+			button.add_theme_font_override("font", ui_font)
 		button.add_theme_stylebox_override("normal", RockBrand.button_style())
 		button.add_theme_stylebox_override("hover", RockBrand.button_style(true))
 		button.add_theme_stylebox_override("pressed", RockBrand.button_style(true))

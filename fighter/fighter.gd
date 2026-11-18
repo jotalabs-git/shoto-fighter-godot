@@ -108,7 +108,10 @@ func _ready() -> void:
 				break
 	state_machine.setup(self)
 
-const SPRITE_SCALE := 0.85
+# Mantener el tamaño heredado de KFM; los personajes Blender se exportan calibrados
+# para 1:1 y no deben perder detalle con una reducción adicional de 0.85.
+const LEGACY_SPRITE_SCALE := 0.85
+const CUSTOM_SPRITE_SCALE := 1.0
 const ATTACK_ANIM := {
 	"st.lp": "stand_lp", "st.mp": "stand_mp", "st.hp": "stand_hp",
 	"st.lk": "stand_lk", "st.mk": "stand_mk", "st.hk": "stand_hk",
@@ -125,6 +128,8 @@ func _setup_sprite() -> void:
 		sprite.visible = false
 		return
 	sprite.sprite_frames = frames
+	# Filtrado explícito: evita que el sprite herede un suavizado de otro CanvasItem.
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite.centered = false
 	sprite.offset = -CharacterFrames.get_axis(character_id)   # pies en el origen del fighter
 	sprite.modulate = CharacterRegistry.tint(character_id) if frames == KfmFrames.get_frames() else Color.WHITE
@@ -237,7 +242,8 @@ func _process(_delta: float) -> void:
 			var authored_phases: Dictionary = sprite.sprite_frames.get_meta("attack_phases", {})
 			if authored_phases.has(a):
 				_sync_attack_sprite(a, authored_phases[a])
-		sprite.scale = Vector2(SPRITE_SCALE * facing(), SPRITE_SCALE)
+		var sprite_scale := CUSTOM_SPRITE_SCALE if CharacterFrames.has_custom_art(character_id) else LEGACY_SPRITE_SCALE
+		sprite.scale = Vector2(sprite_scale * facing(), sprite_scale)
 	queue_redraw()
 
 func _sync_attack_sprite(animation: String, markers: Vector2i) -> void:

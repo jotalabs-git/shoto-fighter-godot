@@ -35,7 +35,7 @@ func _apply_brand() -> void:
 
 func _start(cpu: bool, difficulty: String) -> void:
 	GameConfig.set_mode(cpu, difficulty)
-	get_tree().change_scene_to_file("res://match/match.tscn")
+	get_tree().change_scene_to_file("res://ui/character_select.tscn")
 
 func _toggle_voice_style() -> void:
 	GameConfig.voice_style = "humor" if GameConfig.voice_style == "rock" else "rock"

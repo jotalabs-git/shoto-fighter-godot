@@ -4,7 +4,8 @@ extends Control
 
 const MODEL_EXTENSIONS := ["glb", "gltf", "fbx", "obj", "blend"]
 const SKIP_DIRS := [".git", ".godot", "addons", "test", "tests", "export", "build", "node_modules"]
-const MAX_SCAN_DEPTH := 9
+const MAX_SCAN_DEPTH := 16
+const MODEL_FOLDERS := ["res://assets/models", "res://assets/Models", "res://Assets Models", "res://assets/tmp"]
 
 var model_paths: Array[String] = []
 var list: ItemList
@@ -24,6 +25,10 @@ var dragging := false
 
 func _ready() -> void:
 	get_window().title = "Rock Kombat | Inspector de modelos (DEV)"
+	# El juego usa 384x216; esta escena necesita un lienzo de trabajo independiente.
+	get_window().content_scale_size = Vector2i(1280, 720)
+	get_window().size = Vector2i(1280, 720)
+	get_window().min_size = Vector2i(900, 560)
 	_build_interface()
 	_build_world()
 	_scan_models()
@@ -44,7 +49,7 @@ func _build_interface() -> void:
 	var header := HBoxContainer.new()
 	root.add_child(header)
 	var title := Label.new()
-	title.text = "  ROCK KOMBAT  /  INSPECTOR 3D  [SOLO DESARROLLO]"
+	title.text = "  ROCK KOMBAT  /  INSPECTOR 3D  |  DEV"
 	title.add_theme_font_size_override("font_size", 17)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
@@ -62,17 +67,17 @@ func _build_interface() -> void:
 	root.add_child(body)
 
 	var sidebar := VBoxContainer.new()
-	sidebar.custom_minimum_size = Vector2(215, 0)
+	sidebar.custom_minimum_size = Vector2(325, 0)
 	body.add_child(sidebar)
 	var heading := Label.new()
-	heading.text = "MODELOS EN EL PROYECTO"
+	heading.text = "MODELOS 3D"
 	sidebar.add_child(heading)
 	list = ItemList.new()
 	list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	list.item_selected.connect(_on_model_selected)
 	sidebar.add_child(list)
 	var hint := Label.new()
-	hint.text = "GLB / glTF / FBX / OBJ / BLEND\nArrastrar: rotar | Rueda: zoom\nF6 desde el editor para abrir"
+	hint.text = "Carpeta: assets/models (incluye subcarpetas)\nArrastrar: rotar  |  Rueda: zoom"
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sidebar.add_child(hint)
 
@@ -98,7 +103,7 @@ func _build_interface() -> void:
 	status = RichTextLabel.new()
 	status.bbcode_enabled = false
 	status.scroll_active = true
-	status.custom_minimum_size = Vector2(0, 65)
+	status.custom_minimum_size = Vector2(0, 42)
 	root.add_child(status)
 	_report("El inspector no modifica los modelos ni forma parte de la exportación del juego.")
 
@@ -145,19 +150,28 @@ func _build_world() -> void:
 func _scan_models() -> void:
 	model_paths.clear()
 	list.clear()
+	# Se exploran explícitamente las carpetas de modelos y, como respaldo,
+	# el resto del proyecto. La ruta real en disco permite detectar archivos
+	# copiados allí aunque todavía no tengan importación en el editor.
+	for folder in MODEL_FOLDERS:
+		if DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(folder)):
+			_collect(folder, 0)
 	_collect("res://", 0)
 	model_paths.sort()
 	for path in model_paths:
 		list.add_item(path.trim_prefix("res://"))
-	_report("Detectados %d modelos. Seleccioná uno para importarlo." % model_paths.size())
+	_report("Encontrados %d modelos 3D. Directorio recomendado: res://assets/models/" % model_paths.size())
 	if model_paths.is_empty():
-		details.text = "No se encontraron modelos. Copiá .glb, .gltf, .fbx, .obj o .blend en el proyecto y abrilo primero en el editor Godot para importar recursos."
+		details.text = "No se encontraron modelos en el proyecto. Verificá que los .glb estén dentro de res://assets/models/ y presioná Volver a buscar."
+	else:
+		list.select(0)
+		_on_model_selected(0)
 
 
 func _collect(folder: String, depth: int) -> void:
 	if depth > MAX_SCAN_DEPTH:
 		return
-	var dir := DirAccess.open(folder)
+	var dir := DirAccess.open(ProjectSettings.globalize_path(folder))
 	if dir == null:
 		return
 	dir.list_dir_begin()
@@ -168,10 +182,29 @@ func _collect(folder: String, depth: int) -> void:
 			if dir.current_is_dir():
 				if name not in SKIP_DIRS:
 					_collect(path, depth + 1)
-			elif name.get_extension().to_lower() in MODEL_EXTENSIONS:
+			elif name.get_extension().to_lower() in MODEL_EXTENSIONS and not model_paths.has(path):
 				model_paths.append(path)
 		name = dir.get_next()
 	dir.list_dir_end()
+
+
+func _instantiate_model(path: String) -> Node3D:
+	# GLB/GLTF sin importar: lectura directa, especialmente útil cuando se
+	# acaban de copiar modelos al directorio desde un explorador de archivos.
+	if path.get_extension().to_lower() in ["glb", "gltf"]:
+		var document := GLTFDocument.new()
+		var state := GLTFState.new()
+		var error := document.append_from_file(path, state)
+		if error == OK:
+			return document.generate_scene(state)
+		_report("Error leyendo GLTF: %s (código %d)" % [path, error])
+	var resource := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_REPLACE)
+	if resource is PackedScene:
+		var instance := (resource as PackedScene).instantiate()
+		if instance is Node3D:
+			return instance as Node3D
+		instance.free()
+	return null
 
 
 func _on_model_selected(index: int) -> void:
@@ -179,20 +212,10 @@ func _on_model_selected(index: int) -> void:
 		return
 	var path := model_paths[index]
 	_clear_model()
-	var resource := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_REPLACE)
-	if resource == null:
-		details.text = "ERROR DE IMPORTACIÓN: " + path
-		_report("No se pudo cargar. Revisá la pestaña Importar y el panel Salida de Godot. En .blend necesitás Blender instalado; algunas texturas pueden faltar.")
-		return
-	if not resource is PackedScene:
-		details.text = "INCOMPATIBLE: " + path
-		_report("Godot importó el archivo como %s, no como PackedScene." % resource.get_class())
-		return
-	var instance: Node = (resource as PackedScene).instantiate()
-	if not instance is Node3D:
-		instance.free()
-		details.text = "El recurso no contiene una raíz 3D."
-		_report("Tipo de raíz incompatible con el visor.")
+	var instance := _instantiate_model(path)
+	if instance == null:
+		details.text = "ERROR AL ABRIR: " + path
+		_report("No se pudo cargar. Para OBJ/FBX/BLEND abrí antes el proyecto en el editor de Godot. Para GLB verificá que no esté corrupto y que sus archivos externos existan.")
 		return
 	display_root = Node3D.new()
 	display_root.name = "LoadedModel"

@@ -50,6 +50,9 @@ func _ready() -> void:
 	for f in [p1, p2]:
 		f.wall_left = stage_left
 		f.wall_right = stage_right
+		f.attack_cued.connect(_on_attack_cued.bind(f))
+		f.grab_cued.connect(_on_grab_cued.bind(f))
+		f.fall_cued.connect(_on_fall_cued)
 	if p2_is_cpu:
 		var ai := AIInput.new()
 		ai.difficulty = cpu_difficulty
@@ -92,9 +95,9 @@ func _physics_process(delta: float) -> void:
 	if can_act:
 		Throws.resolve(p1, p2, throw_range)
 		if Combat.resolve(p1, p2):
-			_on_hit(p2)
+			_on_hit(p2, p1, p1.current_move, _is_blocking_hit(p2))
 		if Combat.resolve(p2, p1):
-			_on_hit(p1)
+			_on_hit(p1, p2, p2.current_move, _is_blocking_hit(p1))
 	# Solo un agarre efectivo inicia la toma; throw tech nunca entra a Throw.
 	var throwing := _is_throwing()
 	if throwing and not _throw_was_active:
@@ -172,11 +175,26 @@ func _rematch_pressed() -> bool:
 			return true
 	return false
 
-func _on_hit(defender: Fighter) -> void:
+func _on_attack_cued(move: MoveData, fighter: Fighter) -> void:
+	if sfx != null:
+		sfx.play_attack(fighter, move)
+
+func _on_grab_cued(fighter: Fighter) -> void:
+	if sfx != null:
+		sfx.play_grab(fighter)
+
+func _on_fall_cued(character_id: String) -> void:
+	if sfx != null:
+		sfx.play_fall(character_id)
+
+func _is_blocking_hit(defender: Fighter) -> bool:
+	return defender.state_machine.current_state != null and defender.state_machine.current_state.name == "Blockstun"
+
+func _on_hit(defender: Fighter, attacker: Fighter = null, move: MoveData = null, blocked: bool = false) -> void:
 	_spawn_spark(defender.global_position + Vector2(0.0, -50.0))
 	_shake = 9
 	if sfx != null:
-		sfx.play_hit()
+		sfx.play_impact(attacker, defender, move, blocked)
 
 func _spawn_spark(pos: Vector2) -> void:
 	var spark := HIT_SPARK.instantiate()
@@ -197,6 +215,6 @@ func _process_projectiles(delta: float) -> void:
 					f.receive_block(proj.move, proj.owner_facing)
 				else:
 					f.receive_hit(proj.move, proj.owner_facing)
-				_on_hit(f)
+				_on_hit(f, null, proj.move, _is_blocking_hit(f))
 				proj.queue_free()
 				break

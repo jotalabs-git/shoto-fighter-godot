@@ -1,6 +1,6 @@
 """Editable clay presenter and three short stage performances."""
 import json
-from math import cos, pi, sin
+from math import cos, pi, sin, tau as TAU
 
 import bpy
 from mathutils import Vector
@@ -58,34 +58,87 @@ def sculpt_face(s):
 
 
 def sculpt_hair(s):
-    locks = [
-        s.lump("Hair cap", HEAD, "hair", (-.133, .021, 2.709), (.282, .254, .193), 9),
-        s.lump("Hair at back", HEAD, "hair", (-.266, 0, 2.404), (.215, .260, .316), 18),
+    # A continuous cap sets the hairline. The rolls build volume over that cap.
+    columns, rings = 64, 24
+
+    def crown_point(yaw, progress):
+        front = (1 + cos(yaw)) * .5
+        hairline = 2.39 - 1.37 * front ** 1.9 + .11 * sin(yaw) * front
+        angle = progress * hairline
+        roll = sin(angle) * (1 + .016 * cos(5 * yaw + angle))
+        return (-.041 + .343 * roll * cos(yaw),
+                .010 + .291 * roll * sin(yaw),
+                2.551 + .385 * cos(angle))
+
+    verts = [crown_point(0, 0)]
+    for row in range(1, rings + 1):
+        verts.extend(crown_point(TAU * col / columns, row / rings) for col in range(columns))
+    faces = [(0, 1 + col, 1 + (col + 1) % columns) for col in range(columns)]
+    for row in range(rings - 1):
+        start = 1 + row * columns
+        for col in range(columns):
+            a, b = start + col, start + (col + 1) % columns
+            faces.append((a, a + columns, b + columns, b))
+    faces.append(tuple(reversed(range(len(verts) - columns, len(verts)))))
+    mesh = bpy.data.meshes.new("Continuous crown")
+    mesh.from_pydata(verts, [], faces)
+    mesh.update()
+    crown = bpy.data.objects.new("Continuous crown", mesh)
+    bpy.context.collection.objects.link(crown)
+
+    locks = [s.bind(crown, "Continuous crown", HEAD, "hair"),
+             s.lump("Nape", HEAD, "hair", (-.244, .006, 2.395), (.217, .256, .329), 9)]
+    sweep = [
+        (.009, .058, 2.900, .44), (.138, -.060, 2.864, .98),
+        (.161, -.205, 2.770, 1), (.070, -.284, 2.627, .85),
+        (-.066, -.309, 2.477, .37),
     ]
+    locks.append(clay_line(s, "Side-swept fringe", HEAD, "hair", sweep, .078))
     for sign in (-1, 1):
-        locks.append(clay_line(s, "Long swept lock", HEAD, "hair", [
-            (.108, .056 + sign * .035, 2.857, .48), (.143, sign * .136, 2.792, .99),
-            (.020, sign * .257, 2.667, 1.03), (-.094, sign * .278, 2.463, 1.08),
-            (-.227, sign * .280, 2.236, 1.13), (-.308, sign * .255, 2.047, .98),
-            (-.356, sign * .234, 1.807 + sign * .097, .33),
-        ], .105))
-    merge_clay(s, "Long raven waves", locks, "hair", HEAD, voxel=.010)
+        front_lock = [
+            (.060, sign * .138, 2.822, .09), (.036, sign * .215, 2.777, .63),
+            (-.007, sign * .273, 2.661, .97),
+            (-.072, sign * .300, 2.471, 1), (-.145, sign * .310, 2.289, .93),
+            (-.246, sign * .319, 2.106, .87), (-.277, sign * .281, 1.946 + sign * .046, .58),
+            (-.229, sign * .257, 1.828 + sign * .065, .16),
+        ]
+        back_lock = [
+            (-.170, sign * .091, 2.822, .10), (-.246, sign * .121, 2.749, .62),
+            (-.323, sign * .172, 2.539, 1),
+            (-.362, sign * .214, 2.307, 1.05), (-.337, sign * .242, 2.135, .91),
+            (-.373, sign * .191, 1.979 + sign * .060, .60),
+            (-.434, sign * .144, 1.848 + sign * .055, .17),
+        ]
+        locks.extend([clay_line(s, "Long face-framing wave", HEAD, "hair", front_lock, .105),
+                      clay_line(s, "Long nape wave", HEAD, "hair", back_lock, .115)])
+    merge_clay(s, "Single sculpted head of hair", locks, "hair", HEAD, voxel=.008)
+    for yaw in (-1.19, -.86, .88):
+        clay_line(s, "Swept crown groove", HEAD, "hair_ridge", [
+            (*crown_point(yaw + drift, progress), width)
+            for progress, drift, width in ((.10, .38, .12), (.24, .27, .36),
+                                           (.39, .13, .52), (.55, 0, .45), (.68, -.10, .14))
+        ], .012)
     for sign in (-1, 1):
-        for offset in (0, .045):
-            clay_line(s, "Hand-rolled hair ridges", HEAD, "hair_ridge", [
-                (.122 - offset, sign * .135, 2.867, .28), (.082 - offset, sign * .269, 2.729, .81),
-                (-.094 - offset, sign * .363, 2.493, 1), (-.222 - offset, sign * .366, 2.258, .83),
-                (-.356 - offset, sign * .328, 2.000 + sign * .07, .55),
+        for shift in (0.0, .045):
+            clay_line(s, "Clay strand ridge", HEAD, "hair_ridge", [
+                (.031 - shift, sign * .227, 2.837, .18),
+                (.022 - shift, sign * .346, 2.666, .84),
+                (-.074 - shift, sign * .399, 2.465, 1),
+                (-.146 - shift, sign * .402, 2.280, 1),
+                (-.247 - shift, sign * .402, 2.106, .80),
+                (-.275 - shift, sign * .329, 1.949 + sign * .047, .47),
+                (-.233 - shift, sign * .263, 1.845 + sign * .063, .12),
             ], .016)
 
 
 def costume(s):
     l = s.lump
     torso = merge_clay(s, "Presenter · torso", [
-        l("Shoulder line", BODY, "skin", (-.027, 0, 1.831), (.220, .330, .218), -5),
-        l("Rib cage", BODY, "skin", (-.031, 0, 1.678), (.228, .271, .265), -7),
-        l("Narrow waist", BODY, "skin", (-.030, 0, 1.442), (.181, .215, .196), -5),
-        l("Rounded hips", BODY, "skin", (-.074, 0, 1.298), (.202, .274, .166), -7),
+        l("Shoulder line", BODY, "skin", (-.021, 0, 1.831), (.213, .310, .218), -5),
+        l("Rib cage", BODY, "skin", (-.035, 0, 1.681), (.214, .263, .259), -7),
+        l("Waist contour", BODY, "skin", (-.034, 0, 1.455), (.175, .212, .204), -5),
+        l("Flare to high hip", BODY, "skin", (-.056, 0, 1.355), (.190, .244, .152), -7),
+        l("Rounded hips", BODY, "skin", (-.067, 0, 1.291), (.196, .266, .159), -7),
         l("Upper chest", BODY, "skin", (.154, 0, 1.798), (.194, .271, .193), -8),
     ], "skin", BODY, voxel=.012)
     torso_front = GarmentSurface(torso, 0, 1)
@@ -127,11 +180,14 @@ def costume(s):
     ], .033)
 
     joints = joint_positions(STANCE)
-    seams = [l("Stage shorts waist", BODY, "costume", (-.076, 0, 1.245), (.255, .354, .177), -7)]
+    seams = [
+        l("Stage shorts hip", BODY, "costume", (-.065, 0, 1.242), (.236, .328, .155), -7),
+        l("Shaped high waist", BODY, "costume", (-.044, 0, 1.329), (.210, .292, .103), -9),
+    ]
     for side in ("near", "far"):
         hip, knee = [Vector(joints[f"{j}_{side}"]) for j in ("hips", "knee")]
         seams.append(s.tube("Fitted leg of stage shorts", f"thigh_{side}", "costume", hip,
-                            hip.lerp(knee, .38), (.187, .176), .083))
+                            hip.lerp(knee, .33), (.179, .169), .078))
 
     def shorts_weights(v):
         thigh = 1 - blend(v.z, 1.041, 1.294)
@@ -169,15 +225,15 @@ def limbs(s):
             return {BODY: 1 - leg, thigh: leg * (1 - calf), shin: leg * calf}
 
         merge_clay(s, f"Skin arm · {side}", [
-            l("Shoulder", upper, "skin", shoulder, (.124, .135, .142)),
-            t("Upper arm", upper, "skin", shoulder, elbow, (.101, .112), .093),
-            l("Rounded elbow", lower, "skin", elbow, (.090, .095, .097)),
+            l("Shoulder", upper, "skin", shoulder, (.115, .122, .133)),
+            t("Upper arm", upper, "skin", shoulder, elbow, (.094, .103), .099),
+            l("Rounded elbow", lower, "skin", elbow, (.082, .086, .089)),
             t("Forearm", lower, "skin", elbow, wrist, (.080, .089), .049),
         ], "skin", weights=arm_weights, voxel=.012)
         merge_clay(s, f"Skin leg · {side}", [
-            l("Upper thigh", thigh, "skin", hip.lerp(knee, .18), (.174, .164, .232), sign * 8),
-            t("Thigh", thigh, "skin", hip, knee, (.146, .151), .113),
-            l("Knee", shin, "skin", knee, (.111, .118, .120)),
+            l("Upper thigh", thigh, "skin", hip.lerp(knee, .19), (.159, .149, .236), sign * 8),
+            t("Thigh", thigh, "skin", hip, knee, (.137, .142), .113),
+            l("Knee", shin, "skin", knee, (.103, .109, .119)),
             t("Calf", shin, "skin", knee, foot, (.097, .110), .062),
         ], "skin", weights=leg_weights, voxel=.013)
         x, y, z = wrist
@@ -196,7 +252,7 @@ def limbs(s):
         cuff = wrist.lerp(elbow, .15)
         t("Gold wrist cuff", lower, "metal", cuff, cuff.lerp(elbow, .088), (.095, .101), .014)
         x, y, _ = foot
-        cuff = foot.lerp(knee, .70)
+        cuff = foot.lerp(knee, .67)
         t("Tall satin boot shaft", shin, "boots", foot.lerp(knee, .14), cuff, (.105, .119), .10)
         t("Boot collar", shin, "trim", cuff.lerp(foot, .022), cuff.lerp(foot, .088), (.113, .124), .029)
         l("Boot collar stud", shin, "metal", cuff + Vector((.047, sign * .111, -.026)), (.017, .013, .024))

@@ -20,6 +20,7 @@ extends Node2D
 @export var p2_is_cpu: bool = false
 @export var cpu_difficulty: String = "medium"
 @export_enum("default", "3d", "sprites") var presentation_mode := "default"
+@export var present_rounds := false
 
 @onready var camera: Camera2D = $Camera2D
 
@@ -39,6 +40,8 @@ var _requested_3d := false
 func _enter_tree() -> void:
 	var cfg := get_node_or_null("/root/GameConfig")
 	if cfg != null:
+		present_rounds = present_rounds or cfg.present_next_match
+		cfg.present_next_match = false
 		# La escena conserva defaults pero los tests/escenas pueden asignar
 		# explícitamente otro personaje antes de entrar al árbol.
 		if $Player1.character_id == "guitarist":
@@ -91,6 +94,8 @@ func _ready() -> void:
 		move_child(candidate, $ConcertStage.get_index() + 1)
 		if candidate.configure(camera, [p1, p2]):
 			fighter_views = candidate
+			if present_rounds and candidate.add_round_presenter(match_state):
+				_prepare_round_presenter()
 		else:
 			candidate.queue_free()
 			for fighter in [p1, p2]:
@@ -120,8 +125,8 @@ func _physics_process(delta: float) -> void:
 			sfx.play_ko()
 	elif ev == "match_end" and sfx != null:
 		sfx.play_announcer("winner")
-	# Pueden actuar en intro y pelea; se congelan en fin de round / fin de match.
-	var can_act := match_state.phase == MatchState.FIGHT or match_state.phase == MatchState.INTRO
+	var can_act := match_state.phase == MatchState.FIGHT or (
+		match_state.phase == MatchState.INTRO and not _has_round_presenter())
 	if not can_act:
 		p1.cancel_throw_victim()
 		p2.cancel_throw_victim()
@@ -196,8 +201,19 @@ func _reset_round() -> void:
 		camera.position.x = cam[0]
 		camera.position.y = 108.0
 		camera.zoom = Vector2(cam[1], cam[1])
+	if _has_round_presenter():
+		_prepare_round_presenter()
 	for proj in get_tree().get_nodes_in_group("projectile"):
 		proj.queue_free()
+
+func _has_round_presenter() -> bool:
+	return fighter_views != null and fighter_views.presenter != null
+
+func _prepare_round_presenter() -> void:
+	var half_width := get_viewport_rect().size.x / (2.0 * camera.zoom.x * Fighter3DView.UNITS_PER_METER)
+	match_state.intro_frames = fighter_views.presenter.set_stage_width(half_width)
+	p1.frozen = true
+	p2.frozen = true
 
 func _update_hud() -> void:
 	if hud == null:
@@ -207,7 +223,8 @@ func _update_hud() -> void:
 	var msg := ""
 	match match_state.phase:
 		MatchState.INTRO:
-			msg = "ROUND %d" % (match_state.p1_rounds + match_state.p2_rounds + 1)
+			if not _has_round_presenter():
+				msg = "ROUND %d" % (match_state.p1_rounds + match_state.p2_rounds + 1)
 		MatchState.ROUND_END:
 			msg = "K.O." if (p1.health <= 0 or p2.health <= 0) else "TIME UP"
 		MatchState.MATCH_END:

@@ -112,6 +112,11 @@ def merge_clay(sculpt, name, parts, color, bone=None, weights=None, voxel=.019):
     obj.data.materials.clear()
     if weights is None:
         return sculpt.bind(obj, name, bone, color)
+    return bind_skin(sculpt, obj, name, color, weights)
+
+
+def bind_skin(sculpt, obj, name, color, weights):
+    """Bind mesh vertices in the rig's rest space to the shared deform bones."""
     obj.name = name
     obj.data.materials.append(sculpt.colors[color])
     for polygon in obj.data.polygons:

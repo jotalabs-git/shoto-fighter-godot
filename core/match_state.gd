@@ -16,6 +16,7 @@ const ROUND_END_FRAMES := 80
 
 var phase: int = INTRO
 var phase_frame: int = 0
+var intro_frames := INTRO_FRAMES
 var timer: int = ROUND_FRAMES
 var p1_rounds: int = 0
 var p2_rounds: int = 0
@@ -26,7 +27,7 @@ func tick(p1_hp: int, p2_hp: int) -> String:
 	phase_frame += 1
 	match phase:
 		INTRO:
-			if phase_frame >= INTRO_FRAMES:
+			if phase_frame >= intro_frames:
 				_to(FIGHT)
 				return "fight"
 		FIGHT:

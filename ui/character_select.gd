@@ -269,6 +269,7 @@ func _confirm(side: int) -> void:
 	if _confirmed[0] and _confirmed[1]:
 		_launching = true
 		GameConfig.set_characters(_ids[_indices[0]], _ids[_indices[1]])
+		GameConfig.present_next_match = true
 		get_tree().change_scene_to_file("res://match/match.tscn")
 
 func _process(_delta: float) -> void:

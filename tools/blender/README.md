@@ -157,9 +157,10 @@ golpe fuerte en una pelea de prueba. Las 127 pruebas de Linux pasaron.
 ## Bruce Dickinson
 
 El modelo editable está en `tools/blender/sources/bruce.blend`.
-La Union Jack está esculpida sobre ambas mangas, vinculada al hueso
-del brazo para que acompañe el movimiento. El GLB usa el rig
-compartido y el catálogo de 47 clips a 60 Hz.
+La Union Jack sigue la superficie de ambas mangas y usa sus mismos
+pesos de deformación. Las solapas, el cierre, los broches y la hebilla
+se ajustan a la geometría de la campera. El GLB usa el rig compartido
+y el catálogo de 47 clips a 60 Hz.
 
 ```bash
 tools/blender/run.sh export-glb bruce
@@ -171,3 +172,19 @@ Para probarlo en combate se puede usar `character_id = "bruce"`.
 Dos exportaciones produjeron el mismo GLB y catálogo JSON. En Godot
 cargaron los 47 clips, Bruce conectó un golpe fuerte en una pelea de
 prueba y la suite Linux pasó las 127 pruebas.
+
+## Presentadora de rounds
+
+La figura editable está en `tools/blender/sources/presenter.blend`.
+Tiene tres acciones a 60 Hz: reposo, caminata y presentación. Entrando
+a una partida desde la selección de personajes, usa el mismo escenario
+3D del combate. Entra desde fuera del borde izquierdo, levanta un
+cartel con el número de round y cruza el borde derecho antes de
+habilitar los controles y el reloj. El recorrido se calcula con el
+ancho de cámara al iniciar cada round. Las partidas con sprites usan
+la introducción corta del HUD.
+
+```bash
+tools/blender/run.sh generate presenter
+tools/blender/run.sh export-glb presenter
+```

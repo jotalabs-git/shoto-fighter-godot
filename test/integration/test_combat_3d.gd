@@ -2,9 +2,10 @@ extends GdUnitTestSuite
 
 const MATCH := preload("res://match/match.tscn")
 
-func _arena(second_id := "frontman", mode := "3d") -> MatchManager:
+func _arena(second_id := "frontman", mode := "3d", presenter := false) -> MatchManager:
 	var arena: MatchManager = MATCH.instantiate()
 	arena.presentation_mode = mode
+	arena.present_rounds = presenter
 	arena.get_node("Player2").character_id = second_id
 	add_child(arena)
 	auto_free(arena)
@@ -12,6 +13,55 @@ func _arena(second_id := "frontman", mode := "3d") -> MatchManager:
 	for fighter in [arena.p1, arena.p2]:
 		fighter.set_physics_process(false)
 	return arena
+
+func test_presenter_walks_and_announces_each_round_without_starting_the_clock() -> void:
+	var arena := _arena("frontman", "3d", true)
+	assert_object(arena.fighter_views).is_not_null()
+	if arena.fighter_views == null:
+		return
+	assert_object(arena.fighter_views.presenter).is_not_null()
+	var host := arena.fighter_views.presenter
+	if host == null:
+		return
+	arena.fighter_views._process(0.0)
+	var entry_x := host.position.x
+	var center := arena.camera.position.x / Fighter3DView.UNITS_PER_METER
+	var half_screen := arena.get_viewport_rect().size.x / (arena.camera.zoom.x * Fighter3DView.UNITS_PER_METER * 2.0)
+	assert_float(host.card.global_position.x + .42).is_less(center - half_screen)
+	assert_bool(host.visible).is_true()
+	assert_str(host.number.text).is_equal("ROUND 1")
+	assert_bool(arena.p1.frozen and arena.p2.frozen).is_true()
+	for tick in host.walk_ticks + 20:
+		arena._physics_process(1.0 / 60.0)
+	arena.fighter_views._process(0.0)
+	assert_float(host.position.x).is_greater(entry_x + 2.0)
+	assert_str(host.animation.current_animation).is_equal("presenter_show")
+	assert_int(arena.match_state.timer).is_equal(MatchState.ROUND_FRAMES)
+	for tick in arena.match_state.intro_frames - arena.match_state.phase_frame - 1:
+		arena._physics_process(1.0 / 60.0)
+	arena.fighter_views._process(0.0)
+	assert_float(host.card.global_position.x - .42).is_greater(center + half_screen)
+	assert_float(host.position.x - .75).is_greater(center + half_screen)
+	assert_str(host.animation.current_animation).is_equal("presenter_walk")
+	assert_bool(host.visible).is_true()
+	assert_bool(arena.p1.frozen and arena.p2.frozen).is_true()
+	arena._physics_process(1.0 / 60.0)
+	arena.fighter_views._process(0.0)
+	assert_int(arena.match_state.phase).is_equal(MatchState.FIGHT)
+	assert_bool(host.visible).is_false()
+	assert_bool(arena.p1.frozen or arena.p2.frozen).is_false()
+	arena.p2.health = 0
+	for tick in MatchState.ROUND_END_FRAMES + 1:
+		arena._physics_process(1.0 / 60.0)
+	arena.fighter_views._process(0.0)
+	assert_bool(host.visible).is_true()
+	assert_str(host.number.text).is_equal("ROUND 2")
+	assert_bool(arena.p1.frozen and arena.p2.frozen).is_true()
+
+func test_sprite_matches_keep_the_short_intro_when_a_presenter_is_requested() -> void:
+	var arena := _arena("frontman", "sprites", true)
+	assert_int(arena.match_state.intro_frames).is_equal(MatchState.INTRO_FRAMES)
+	assert_bool(arena.fighter_views == null).is_true()
 
 func _tick(fighter: Fighter, count: int) -> void:
 	for i in count:

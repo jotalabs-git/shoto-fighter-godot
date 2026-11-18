@@ -55,6 +55,9 @@ def export(args):
         if prop in rig:
             rig[prop] = 0.0
     rig.update_tag(refresh={"OBJECT"})
+    if "presenter_catalog" in scene:
+        write_glb(args, rig, json.loads(scene["presenter_catalog"]))
+        return
     catalog = {
         name: {"ticks": sum(info["durs"]), "loop": info["loop"]}
         for name, info in json.loads(scene["sprite_catalog"]).items()
@@ -99,15 +102,19 @@ def export(args):
             catalog[name]["recovery"] = sum(duration for duration, _ in poses[:2])
     scene.frame_start = 1
     scene.frame_end = int(max(action.frame_end for action in bpy.data.actions))
+    floor_offset = down_floor(scene, rig, args.character)
+    write_glb(args, rig, catalog, floor_offset)
+
+
+def write_glb(args, rig, catalog, floor_offset=0.0):
     bpy.ops.object.select_all(action="DESELECT")
     rig.select_set(True)
     for obj in rig.children:
         if obj.type == "MESH":
             obj.select_set(True)
-    floor_offset = down_floor(scene, rig, args.character)
     rig.animation_data.action = bpy.data.actions["idle"]
     rig.animation_data.action_slot = rig.animation_data.action.slots[0]
-    scene.frame_set(1)
+    bpy.context.scene.frame_set(1)
 
     output = args.output
     output.mkdir(parents=True, exist_ok=True)

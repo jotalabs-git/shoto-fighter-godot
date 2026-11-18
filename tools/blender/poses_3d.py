@@ -144,7 +144,7 @@ def performances(character):
                     knee_far=(.36, .25, .36), foot_far=(.82, .27, .13),
                     boot_near=(.26, 0, 0))
         if character == "bruce":
-            down["head"] = (-1.33, 0, .49)
+            down["head"] = (-1.33, 0, .60)
     else:
         # Roll onto the jacket with the guitar angled away from the floor.
         down = dict(down, hips=(-.35, 0, .24), neck=(-.94, -.15, .29), head=(-1.50, -.20, .49),

@@ -15,6 +15,7 @@ from guitarist import build_guitarist
 from ozzy import build_ozzy
 from pose_controls import add_ik, align_ik_to_idle, pose_view
 from poses import BONES, STANCE, actions, joint_positions, points
+from presenter import add_presenter_actions, build_presenter
 
 
 def make_rig():
@@ -167,11 +168,14 @@ def generate(args):
     character = settings["characters"][args.character]
     rig = make_rig()
     builders = {"guitarist": build_guitarist, "frontman": build_frontman,
-                "ozzy": build_ozzy, "bruce": build_bruce}
+                "ozzy": build_ozzy, "bruce": build_bruce, "presenter": build_presenter}
     builders[args.character](rig, character["palette"])
     add_ik(rig)
     stage(settings["camera"], character.get("art_facing", 1))
-    add_actions(rig, args.character, args.full, settings["attack_phases"])
+    if args.character == "presenter":
+        add_presenter_actions(rig, key_pose)
+    else:
+        add_actions(rig, args.character, args.full, settings["attack_phases"])
     align_ik_to_idle(rig)
     bpy.ops.object.select_all(action="DESELECT")
     rig.select_set(True)

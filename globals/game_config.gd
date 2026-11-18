@@ -9,6 +9,7 @@ var voice_style: String = "rock"  # rock / humor (requiere voces CC BY instalada
 var fighter_presentation: StringName = &"3d"
 var p1_character_id: String = "guitarist"
 var p2_character_id: String = "frontman"
+var present_next_match := false
 
 func set_mode(cpu: bool, difficulty: String) -> void:
 	p2_is_cpu = cpu

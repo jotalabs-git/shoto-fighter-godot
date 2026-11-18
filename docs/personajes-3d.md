@@ -1,5 +1,18 @@
 # Personajes 3D en Rock Kombat
 
+## Dirección de arte
+
+Figuras de plastilina con estética de stop motion. La silueta,
+el peinado y la indumentaria identifican al músico desde la cámara
+lateral. Caras, cejas y manos admiten una exageración mayor que el
+resto del cuerpo. Las mejillas se esculpen con planos suaves y las
+asimetrías y pliegues del rostro dan expresión incluso en reposo.
+La piel y el pelo tienen acabado mate y los detalles de ropa siguen
+la superficie de la prenda. Bruce es la primera aplicación de esta
+dirección. La lectura de las poses se comprueba a escala de combate.
+
+## Presentación en Godot
+
 El Guitarrista y el Frontman se instancian desde GLB en la pelea. Un
 `SubViewport` transparente contiene a ambos, una cámara ortográfica y
 luces compartidas. La pasada se compone sobre el escenario y debajo de

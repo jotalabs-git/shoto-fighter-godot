@@ -1,0 +1,17 @@
+{
+  "down_floor_offset": 0.0,
+  "clips": {
+    "presenter_walk": {
+      "ticks": 32,
+      "loop": true
+    },
+    "presenter_show": {
+      "ticks": 84,
+      "loop": false
+    },
+    "idle": {
+      "ticks": 36,
+      "loop": true
+    }
+  }
+}

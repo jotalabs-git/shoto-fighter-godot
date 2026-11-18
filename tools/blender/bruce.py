@@ -2,10 +2,11 @@
 from math import cos, radians, sin
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 from frontman import combat_boot
-from model import Sculpt, angled_face, blend, clay_line, clay_plate, merge_clay
+from garment_surface import GarmentSurface
+from model import Sculpt, angled_face, blend, clay_line, merge_clay
 from poses import STANCE, joint_positions
 
 HEAD = "head"
@@ -15,14 +16,16 @@ TORSO = "pelvis"
 def face(s):
     l = s.lump
     head = merge_clay(s, "Bruce · sculpted head", [
-        l("Rounded crown", HEAD, "skin", (-.043, 0, 2.543), (.304, .267, .343), 11),
-        l("Broad cheekbones", HEAD, "skin", (.104, 0, 2.404), (.255, .258, .234), 7),
-        l("Tapered jaw", HEAD, "skin", (.091, 0, 2.291), (.233, .216, .192), -7),
-        l("Rounded chin", HEAD, "skin", (.193, 0, 2.205), (.157, .166, .120), -5),
-        l("Upper muzzle", HEAD, "skin", (.262, 0, 2.329), (.108, .158, .087)),
-        l("Straight nose bridge", HEAD, "skin", (.300, 0, 2.479), (.090, .068, .111), 18),
-        l("Nose tip", HEAD, "skin", (.364, -.006, 2.417), (.106, .089, .068), 4),
-        *[l("Cheek", HEAD, "skin", (.160, side * .168, 2.400), (.163, .105, .105), 9)
+        l("Sculpted forehead", HEAD, "skin", (.008, 0, 2.553), (.277, .254, .322), 9),
+        l("Broad cheekbones", HEAD, "skin", (.092, 0, 2.418), (.233, .281, .217), 3),
+        l("Angular jaw", HEAD, "skin", (.094, 0, 2.283), (.238, .203, .174), -9),
+        l("Heavy chin", HEAD, "skin", (.209, 0, 2.204), (.150, .148, .108), -8),
+        l("Upper lip plane", HEAD, "skin", (.271, -.005, 2.323), (.090, .141, .074), -7),
+        l("Long nose bridge", HEAD, "skin", (.297, -.008, 2.483), (.091, .064, .137), 14),
+        l("Nose tip", HEAD, "skin", (.369, -.014, 2.421), (.093, .087, .064), 9),
+        *[l("Sloping cheek plane", HEAD, "skin", (.151, side * .177, 2.421),
+             (.179, .100, .094), -18 if side == -1 else -11) for side in (-1, 1)],
+        *[l("Pressed ear", HEAD, "skin", (-.095, side * .265, 2.398), (.089, .070, .105), -17)
           for side in (-1, 1)],
     ], "skin", HEAD, voxel=.009)
     bpy.context.view_layer.update()
@@ -39,31 +42,37 @@ def face(s):
         return result
 
     l("Neck", HEAD, "skin", (.033, 0, 2.024), (.158, .172, .177), -6)
-    clay_line(s, "Closed mouth", HEAD, "mouth", on_face([
-        (-.117, 2.303, .36), (-.059, 2.293, .80), (0, 2.296, 1),
-        (.056, 2.291, .89), (.115, 2.294, .30),
-    ], .002), .012)
-    clay_line(s, "Lower lip", HEAD, "lip", on_face([
-        (-.084, 2.279, .42), (-.019, 2.273, 1), (.039, 2.273, .86), (.088, 2.279, .28),
-    ], .002), .016)
+    clay_line(s, "Asymmetric smirk", HEAD, "mouth", on_face([
+        (-.145, 2.324, .27), (-.077, 2.302, .84), (0, 2.294, 1),
+        (.061, 2.287, .80), (.117, 2.296, .27),
+    ], .003), .014)
+    clay_line(s, "Pinched lower lip", HEAD, "lip", on_face([
+        (-.116, 2.301, .24), (-.061, 2.282, .70), (-.014, 2.269, 1),
+        (.047, 2.264, .87), (.095, 2.275, .26),
+    ], .003), .019)
     for side in (-1, 1):
         yaw = side * 26
         normal = Vector((cos(radians(yaw)), sin(radians(yaw)), 0))
-        eye = Vector((.283, side * .148, 2.510))
-        angled_face(s, "Creased eye socket", "skin", eye - normal * .024, (.060, .108, .063), yaw)
-        angled_face(s, "Eye white", "white", eye + normal * .013, (.031, .084, .034), yaw)
-        iris = eye + normal * .043 + Vector((0, -side * .012, .002))
-        angled_face(s, "Hazel iris", "iris", iris, (.014, .037, .037), yaw)
-        angled_face(s, "Pupil", "dark", iris + normal * .011, (.009, .022, .023), yaw)
-        l("Catchlight", HEAD, "white", iris + normal * .020 + Vector((0, -.007, .010)), (.007, .007, .007))
-        clay_line(s, "Upper eyelid", HEAD, "skin", [
-            (.312, side * .073, 2.521, .30), (.329, side * .126, 2.544, 1),
-            (.307, side * .176, 2.549, .90), (.271, side * .221, 2.537, .32),
-        ], .019)
-        clay_line(s, "Chestnut brow", HEAD, "brow", on_face([
-            (side * .067, 2.565, .56), (side * .126, 2.588, 1),
-            (side * .185, 2.587, .74), (side * .236, 2.562, .26),
-        ], .012), .024)
+        raised = .016 if side < 0 else -.013
+        eye = Vector((.281, side * .150, 2.512 + raised * .42))
+        angled_face(s, "Sculpted eyelid base", "skin", eye - normal * .030, (.055, .112, .064), yaw)
+        angled_face(s, "Shaded eye", "lip", eye + normal * .007, (.030, .090, .043), yaw)
+        angled_face(s, "Eye white", "white", eye + normal * .017, (.030, .083, .037), yaw)
+        iris = eye + normal * .046 + Vector((0, -side * .015, -.002))
+        angled_face(s, "Hazel iris", "iris", iris, (.012, .034, .034), yaw)
+        angled_face(s, "Pupil", "dark", iris + normal * .010, (.008, .021, .023), yaw)
+        l("Catchlight", HEAD, "white", iris + normal * .016 + Vector((0, -.008, .010)), (.007, .007, .007))
+        clay_line(s, "Hand-rolled upper eyelid", HEAD, "skin", [
+            (.316, side * .073, 2.528, .26), (.333, side * .118, 2.549 + raised, .90),
+            (.308, side * .169, 2.554 + raised, 1), (.271, side * .224, 2.535, .32),
+        ], .023)
+        clay_line(s, "Press-shaped chestnut brow", HEAD, "brow", on_face([
+            (side * .058, 2.565 + raised * .4, .69), (side * .113, 2.592 + raised, 1),
+            (side * .179, 2.594 + raised, .96), (side * .231, 2.570 + raised * .4, .43),
+        ], .014), .033)
+        clay_line(s, "Pressed cheek crease", HEAD, "lip", on_face([
+            (side * .106, 2.390, .20), (side * .128, 2.368, .49), (side * .155, 2.347, .11),
+        ], .000), .010)
         l("Nostril", HEAD, "mouth", (.408, side * .056, 2.381), (.026, .022, .011), 11)
 
 
@@ -107,59 +116,65 @@ def hair(s):
             ], .021)
 
 
-def flag(s, bone, side, center):
+def flag(s, surface, side, center, weights):
     """Three stitched colors and the offset Irish saltire on the blue patch."""
-    origin = Vector(center)
-    right, up, normal = Vector((1, 0, 0)), Vector((0, 0, 1)), Vector((0, side, 0))
-
-    def polygon(name, color, coords, layer, thickness=.006):
-        points = [origin + right * (x * .30) + up * (y * .161) + normal * (layer * .75) for x, y in coords]
-        clay_plate(s, name, bone, color, points, thickness * normal, thickness * .27)
+    def polygon(name, color, coords, layer):
+        outline = [(center.x - side * x * .245, center.z + z * .132) for x, z in coords]
+        surface.applique(s, "Union Jack · " + name, color, outline, layer * .0015, weights=weights)
 
     rectangle = [(-.5, -.5), (.5, -.5), (.5, .5), (-.5, .5)]
-    polygon("Union Jack · leather border", "rubber", [(x * 1.13, z * 1.20) for x, z in rectangle], -.004, .018)
-    polygon("Union Jack · navy field", "flag_blue", rectangle, .006)
+    polygon("embroidered edge", "rubber", [(x * 1.10, z * 1.17) for x, z in rectangle], 1)
+    polygon("navy field", "flag_blue", rectangle, 2)
     for sx in (-1, 1):
         for sz in (-1, 1):
-            polygon("Union Jack · white saltire", "flag_white", [
+            polygon("white saltire", "flag_white", [
                 (0, 0), (sx * .40, sz * .50), (sx * .50, sz * .50),
                 (sx * .50, sz * .34), (sx * .09, 0),
-            ], .013)
+            ], 3)
             offset = .035 if sx * sz > 0 else .096
-            polygon("Union Jack · red saltire", "flag_red", [
+            polygon("red saltire", "flag_red", [
                 (sx * offset, 0), (sx * .50, sz * (.49 - offset)),
                 (sx * .50, sz * (.43 - offset)), (sx * (offset + .070), 0),
-            ], .018)
+            ], 4)
     for color, half in (("flag_white", .150), ("flag_red", .087)):
-        lift = .023 if color == "flag_white" else .030
-        polygon("Union Jack · horizontal cross", color, [(x, z * half * 2) for x, z in rectangle], lift)
-        polygon("Union Jack · vertical cross", color, [(x * half * 1.42, z) for x, z in rectangle], lift + .0006)
+        lift = 5 if color == "flag_white" else 6
+        polygon("horizontal cross", color, [(x, z * half * 2) for x, z in rectangle], lift)
+        polygon("vertical cross", color, [(x * half * 1.42, z) for x, z in rectangle], lift + .15)
 
 
 def jacket(s):
     l = s.lump
-    merge_clay(s, "Bruce · leather jacket torso", [
+    body = merge_clay(s, "Bruce · leather jacket torso", [
         l("Jacket shoulders", TORSO, "leather", (-.035, 0, 1.797), (.252, .370, .232), -7),
         l("Jacket body", TORSO, "leather", (-.043, 0, 1.595), (.231, .318, .335), -6),
         l("Jacket waist", TORSO, "leather", (-.059, 0, 1.351), (.215, .299, .166), -7),
     ], "leather", TORSO, voxel=.012)
-    l("Faded charcoal tee", TORSO, "tee", (.166, 0, 1.708), (.085, .198, .253), -6)
+    surface = GarmentSurface(body, 0, 1)
+
+    def seam(name, color, anchors, radius):
+        clay_line(s, name, TORSO, color, [(*surface.point(y, z), width) for y, z, width in anchors], radius)
+
+    surface.applique(s, "Faded charcoal tee", "tee", [
+        (-.120, 1.970), (0, 1.917), (.120, 1.970), (.152, 1.850), (.101, 1.562),
+        (-.098, 1.562), (-.153, 1.850),
+    ], .002, bone=TORSO)
     for side in (-1, 1):
-        clay_plate(s, "Folded biker lapel", TORSO, "lapel", [(x, side * y, z) for x, y, z in [
-            (.149, .121, 1.979), (.190, .261, 1.911), (.220, .247, 1.720),
-            (.252, .096, 1.572), (.249, .145, 1.750), (.235, .108, 1.817),
-        ]], (.047, 0, 0), .025)
-        l("Steel collar snap", TORSO, "metal", (.207, side * .223, 1.884), (.023, .032, .030))
-        l("Steel lapel snap", TORSO, "metal", (.253, side * .143, 1.732), (.019, .024, .024))
-        clay_line(s, "Raised seam at jacket waist", TORSO, "lapel", [
-            (.197, side * .253, 1.426, .50), (.223, side * .182, 1.431, .95),
-            (.236, side * .074, 1.437, 1),
-        ], .018)
-    clay_line(s, "Angled steel zipper", TORSO, "metal", [
-        (.229, .122, 1.357, .43), (.242, .143, 1.537, .75), (.244, .183, 1.704, .84),
-    ], .010)
-    l("Zipper pull", TORSO, "metal", (.256, .173, 1.559), (.011, .026, .039), -11)
-    l("Jacket belt buckle", TORSO, "metal", (.216, -.106, 1.368), (.037, .057, .036))
+        outline = [(side * y, z) for y, z in [
+            (.121, 1.958), (.231, 1.912), (.234, 1.746), (.090, 1.575), (.146, 1.756), (.109, 1.821),
+        ]]
+        surface.applique(s, "Folded biker lapel", "lapel", outline, .0045, bone=TORSO)
+        l("Steel collar snap", TORSO, "metal", surface.point(side * .199, 1.884, .005), (.016, .023, .023))
+        l("Steel lapel snap", TORSO, "metal", surface.point(side * .170, 1.753, .005), (.014, .019, .019))
+        seam("Raised seam at jacket waist", "lapel", [
+            (side * .232, 1.426, .50), (side * .182, 1.431, .85),
+            (side * .124, 1.435, 1), (side * .074, 1.437, .87),
+        ], .013)
+    seam("Angled steel zipper", "metal", [
+        (.115, 1.357, .43), (.122, 1.429, .74), (.143, 1.522, .76),
+        (.162, 1.604, .78), (.183, 1.700, .65),
+    ], .009)
+    l("Zipper pull", TORSO, "metal", surface.point(.151, 1.548, .004), (.012, .015, .026), -11)
+    l("Jacket belt buckle", TORSO, "metal", surface.point(-.106, 1.368, .004), (.021, .042, .027))
 
 
 def limbs(s):
@@ -178,24 +193,33 @@ def limbs(s):
             forearm = blend((v - elbow).dot(bend), -.106, .090)
             return {TORSO: 1 - arm, upper: arm * (1 - forearm), lower: arm * forearm}
 
-        merge_clay(s, f"Articulated leather sleeve · {side}", [
+        sleeve = merge_clay(s, f"Articulated leather sleeve · {side}", [
             l("Rounded shoulder", upper, "leather", shoulder, (.156, .158, .165)),
             t("Leather upper arm", upper, "leather", shoulder, elbow, (.129, .133), .094),
             l("Elbow fold volume", lower, "leather", elbow, (.110, .124, .117)),
             t("Leather forearm", lower, "leather", elbow, wrist, (.111, .113), .032),
         ], "leather", weights=sleeve_weights, voxel=.013)
-        point = shoulder.lerp(elbow, .34)
-        flag(s, upper, sign, point + Vector((0, sign * .142, .006)))
+        flag(s, GarmentSurface(sleeve, 1, sign), sign, shoulder.lerp(elbow, .34), sleeve_weights)
         cuff = wrist.lerp(elbow, .1)
         t("Rolled leather cuff", lower, "lapel", cuff, cuff.lerp(elbow, .21), (.122, .117), .020)
         x, y, z = wrist
+        fingers = []
+        for dy, reach in ((-.076, .153), (-.028, .183), (.023, .181), (.073, .144)):
+            fingers.append(clay_line(s, "Clay knuckle", fist, "skin", [
+                (x + .063, y + dy * .74, z + .034, 1),
+                (x + reach, y + dy, z + .044, .96),
+                (x + reach + .008, y + dy, z - .018, .86),
+                (x + reach - .026, y + dy * .93, z - .035, .69),
+            ], .035))
         merge_clay(s, f"Bare fist · {side}", [
-            l("Palm", fist, "skin", (x + .052, y, z), (.130, .110, .091)),
-            l("Folded knuckles", fist, "skin", (x + .131, y, z + .016), (.101, .115, .088), 13),
-            l("Thumb", fist, "skin", (x + .067, y - sign * .077, z + .052), (.071, .061, .050), -17),
-        ], "skin", fist, voxel=.009)
-        for dy in (-.048, .007, .059):
-            l("Fist fold", fist, "lip", (x + .207, y + dy, z + .013), (.011, .008, .013))
+            l("Palm", fist, "skin", (x + .045, y, z), (.112, .101, .073)),
+            clay_line(s, "Thumb across curled fingers", fist, "skin", [
+                (x + .007, y - sign * .066, z + .024, 1),
+                (x + .087, y - sign * .084, z - .005, 1),
+                (x + .131, y - sign * .031, z - .050, .64),
+            ], .044),
+            *fingers,
+        ], "skin", fist, voxel=.007)
         denim.extend([
             t("Jeans thigh", thigh, "denim", hip, knee, (.164, .155), .124),
             l("Jeans knee", shin, "denim", knee, (.141, .140, .138)),
@@ -227,3 +251,21 @@ def build_bruce(rig, colors):
     limbs(s)
     face(s)
     hair(s)
+    # Keep the neck at the original joint and enlarge the sculpt above it.
+    pivot = Vector((.038, 0, 2.099))
+    scale = Matrix.Translation(pivot) @ Matrix.Diagonal((1.14, 1.20, 1.13, 1)) @ Matrix.Translation(-pivot)
+    for obj in rig.children:
+        if obj.parent_bone == HEAD and obj.name != "Neck":
+            obj.matrix_world = scale @ obj.matrix_world
+    for side in ("near", "far"):
+        pivot = Vector(STANCE[f"hand_{side}"])
+        scale = Matrix.Translation(pivot) @ Matrix.Diagonal((1.075, 1.13, 1.12, 1)) @ Matrix.Translation(-pivot)
+        for obj in rig.children:
+            if obj.parent_bone == f"fist_{side}":
+                obj.matrix_world = scale @ obj.matrix_world
+    for material, roughness in (("skin", .80), ("brow", .77), ("hair", .70), ("copper", .68)):
+        nodes = s.colors[material].node_tree.nodes
+        nodes["Principled BSDF"].inputs["Roughness"].default_value = roughness
+        bump = next(node for node in nodes if node.type == "BUMP")
+        bump.inputs["Strength"].default_value = .14
+        bump.inputs["Distance"].default_value = .025

@@ -10,6 +10,8 @@ var camera_3d: Camera3D
 var camera_2d: Camera2D
 var surface: Sprite2D
 var models: Array[Fighter3DView] = []
+var presenter: RoundPresenter
+var _match_state: MatchState
 var _window_size := Vector2i.ZERO
 var _old_visibility: Array[Vector2i] = []
 var _max_width := MAX_WIDTH
@@ -66,6 +68,16 @@ func configure(camera: Camera2D, fighters: Array[Fighter]) -> bool:
 	_process(0.0)
 	return true
 
+func add_round_presenter(state: MatchState) -> bool:
+	var actor := RoundPresenter.new()
+	viewport_3d.add_child(actor)
+	if not actor.configure():
+		actor.queue_free()
+		return false
+	presenter = actor
+	_match_state = state
+	return true
+
 func _exit_tree() -> void:
 	for index in _old_visibility.size():
 		var fighter := models[index].fighter
@@ -95,6 +107,10 @@ func _process(delta: float) -> void:
 	var center := Fighter3DView.to_world(camera_2d.get_screen_center_position(), models[0].fighter.ground_y)
 	camera_3d.position = center + Vector3(0, 0, 13.0)
 	camera_3d.size = logical_size.y / (Fighter3DView.UNITS_PER_METER * camera_2d.zoom.y)
+	if presenter != null:
+		var middle := (models[0].fighter.position.x + models[1].fighter.position.x) / 2.0
+		presenter.sync(_match_state.phase, _match_state.phase_frame,
+			_match_state.p1_rounds + _match_state.p2_rounds + 1, middle / Fighter3DView.UNITS_PER_METER)
 
 	for view in models:
 		var rival := models[1] if view == models[0] else models[0]

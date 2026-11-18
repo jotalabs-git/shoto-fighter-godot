@@ -51,6 +51,15 @@
         "sole": "242329", "lace": "615554", "nickel": "9c8f89", "rubber": "251f23",
         "flag_blue": "223f6a", "flag_white": "f4e6d0", "flag_red": "b72638"
       }
+    },
+    "presenter": {
+      "label": "Presentadora",
+      "palette": {
+        "skin": "c58b6f", "hair": "261c25", "hair_ridge": "4a3348",
+        "lash": "2b1927", "iris": "74523d", "lip": "a93652", "shadow": "894354",
+        "metal": "e1ac68", "costume": "8f1e42", "trim": "522039", "accent": "e7788b",
+        "gem": "efcdb7", "boots": "331a2b"
+      }
     }
   }
 }

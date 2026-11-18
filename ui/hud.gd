@@ -4,8 +4,8 @@ extends CanvasLayer
 ## Capa de presentación únicamente: el estado de combate sigue en MatchManager.
 ## Barras desde los extremos hacia el centro para seguir el esquema arcade.
 
-const BAR_W := 160.0
-const P2_BAR_LEFT := 212.0
+const BAR_W := 162.0
+const P2_BAR_LEFT := 211.0
 const P1_COLOR := Color(0.26, 0.82, 0.94)
 const P2_COLOR := Color(0.97, 0.31, 0.44)
 const DANGER_COLOR := Color(1.0, 0.77, 0.28)

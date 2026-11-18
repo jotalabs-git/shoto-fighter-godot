@@ -14,3 +14,16 @@ func test_zoom_clamped_to_min_when_far() -> void:
 	# needed = 384 + 180 = 564; 384/564 ~= 0.68 -> clamp a min 0.85
 	var c := CameraLogic.compute(0.0, 384.0, 384.0, 0.85, 1.6, 90.0)
 	assert_float(c[1]).is_equal(0.85)
+
+func test_wider_stage_zoom_out_is_progressive() -> void:
+	# Con los parametros actuales del match, la distancia incrementa
+	# gradualmente el campo visible, sin cambiar el centro del combate.
+	var close := CameraLogic.compute(170.0, 214.0, 384.0, 0.70, 1.20, 85.0)
+	var start := CameraLogic.compute(112.0, 272.0, 384.0, 0.70, 1.20, 85.0)
+	var far := CameraLogic.compute(-32.0, 416.0, 384.0, 0.70, 1.20, 85.0)
+	assert_float(close[1]).is_greater(start[1])
+	assert_float(start[1]).is_greater(far[1])
+	assert_float(far[1]).is_equal(0.70)
+	assert_float(close[0]).is_equal(192.0)
+	assert_float(start[0]).is_equal(192.0)
+	assert_float(far[0]).is_equal(192.0)

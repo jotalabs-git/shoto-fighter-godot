@@ -109,7 +109,10 @@ func _add_preview(side: int, at: Vector2) -> void:
 		var light := DirectionalLight3D.new()
 		light.light_color = (Color("#FFF0D9") if index == 0 else Color("#A4CFFF"))
 		light.light_energy = 1.25 if index == 0 else 0.65
-		light.rotation_degrees = Vector3(-38, -35 if side == 0 else 35, 0) if index == 0 else Vector3(-20, 120, 0)
+		if index == 0:
+			light.rotation_degrees = Vector3(-38, -35 if side == 0 else 35, 0)
+		else:
+			light.rotation_degrees = Vector3(-20, 120, 0)
 		vp.add_child(light)
 
 func _label(value: String, pos: Vector2, dimensions: Vector2, font_size: int, color: Color, horizontal: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
@@ -136,6 +139,7 @@ func _panel(pos: Vector2, dimensions: Vector2, color: Color) -> void:
 func _load_preview(side: int) -> void:
 	var vp := _viewport_nodes[side]
 	if is_instance_valid(_models[side]):
+		vp.remove_child(_models[side])
 		_models[side].queue_free()
 	_models[side] = null
 	var source_path := CharacterRegistry.model_path(IDS[_indices[side]])

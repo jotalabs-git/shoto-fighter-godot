@@ -64,3 +64,19 @@ correspondiente aparezca en combate sin romper sonido, cámara ni hitboxes.
 
 El test `test/integration/test_character_select.gd` valida el registro,
 las previsualizaciones y la propagación de IDs al combate.
+
+## Corrección de diseño y vistas previas (18/11/2026)
+
+- La cámara 3D se añade primero al `SubViewport` y **después** se orienta
+  mediante `look_at`: invocar ese método fuera del árbol podía dejar los
+  modelos fuera de encuadre.
+- Composición fija a 384×216 con paneles laterales de 120 px, grilla central
+  de tarjetas de 57×43 px y márgenes explícitos, evitando la superposición
+  causada por `RockBrand.button_style()` en botones muy estrechos.
+- Títulos con tipografía `display`, rótulos `impact` y textos/controles
+  con `ui`, utilizando las fuentes originales de `RockBrand`.
+- Bases 3D iluminadas tipo escenario para cada personaje.
+- Las pruebas incluyen la comprobación del vector de dirección de cámara.
+
+**Validación visual pendiente:** ejecutar Godot en la máquina de desarrollo;
+no se ha capturado una imagen nueva del resultado en este entorno.

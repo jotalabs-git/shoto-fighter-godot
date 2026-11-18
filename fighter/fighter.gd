@@ -119,15 +119,15 @@ const ATTACK_ANIM := {
 }
 
 func _setup_sprite() -> void:
-	var frames := KfmFrames.get_frames()
+	var frames := CharacterFrames.get_frames(character_id)
 	# Si los sprites no están disponibles (no importados), fallback al rig geométrico.
 	if frames == null or not frames.has_animation("idle") or frames.get_frame_count("idle") == 0:
 		sprite.visible = false
 		return
 	sprite.sprite_frames = frames
 	sprite.centered = false
-	sprite.offset = -KfmFrames.axis   # el eje (pies) queda en el origen del fighter
-	sprite.modulate = Color(0.72, 0.82, 1.0) if character_id == "kaze" else Color(1.0, 0.86, 0.82)
+	sprite.offset = -CharacterFrames.get_axis(character_id)   # pies en el origen del fighter
+	sprite.modulate = CharacterRegistry.tint(character_id)
 	sprite.play("idle")
 	visual.visible = false   # ocultar el rig geométrico; el sprite lo reemplaza
 
@@ -232,7 +232,7 @@ func _process(_delta: float) -> void:
 		var a := _sprite_anim(st)
 		if a != _cur_anim:
 			_cur_anim = a
-			sprite.play(a)
+			sprite.play(a if sprite.sprite_frames.has_animation(a) else "idle")
 		sprite.scale = Vector2(SPRITE_SCALE * facing(), SPRITE_SCALE)
 	queue_redraw()
 

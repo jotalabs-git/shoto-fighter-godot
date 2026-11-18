@@ -107,7 +107,7 @@ def kick(startup, active, recovery, x, z, base):
 
 
 def fallen():
-    return {
+    pose = {
         "hips": (-.35, 0, .37), "neck": (-.94, 0, .40), "head": (-1.52, 0, .43),
         "shoulder_near": (-.88, -.31, .41), "elbow_near": (-.52, -.49, .29),
         "hand_near": (-.23, -.63, .22), "shoulder_far": (-.86, .31, .42),
@@ -116,6 +116,12 @@ def fallen():
         "knee_far": (.21, .18, .60), "foot_far": (.69, .19, .45),
         "boot_near": (.07, 0, .31)
     }
+    # The hair and the bottom of the guitar extend below the hip in this pose.
+    # Lift the body, while keeping the trailing boot in contact with the floor.
+    result = shifted({key: point for key, point in pose.items() if key != "boot_near"}, .29)
+    result["foot_near"] = pose["foot_near"]
+    result["boot_near"] = pose["boot_near"]
+    return result
 
 
 def actions(character, full):
@@ -202,4 +208,6 @@ def points(joints, name):
         end = tuple(a + b for a, b in zip(root, direction))
     else:
         end = joints[end]
+    if name == "instrument" and "instrument_tip" in joints:
+        end = joints["instrument_tip"]
     return root, end

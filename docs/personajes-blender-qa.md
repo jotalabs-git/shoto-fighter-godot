@@ -52,3 +52,19 @@ Los comandos de reproducción están en [tools/blender/README.md](../tools/blend
   piso del recital. Xvfb con llvmpipe avisó que no admite cambiar V-Sync.
 - La segunda ejecución de `bash scripts/check-linux.sh` aprobó los 102
   tests, incluida la carga del PNG propio y el fallback de Kaze.
+
+## G3 · Catálogo del Guitarrista
+
+- `tools/blender/run.sh generate guitarist --full` reconstruyó la fuente.
+  `tools/blender/run.sh render guitarist --actions` recibió los 22 nombres
+  faltantes de KFM. Conservó los 19 PNG de G2.
+- El validador bloqueó la primera exportación porque `knockdown/003.png`
+  y `getup/000.png` tocaban el borde inferior. Se elevó la pose caída con
+  apoyo de la bota y se repitió la exportación. `g3-render-rejected.log`
+  conserva el diagnóstico. `g3-render.log` registra la corrida válida.
+- Se verificó el catálogo completo con `validate_character.py guitarist --complete`
+  y se revisó `g3-catalogo.png`, incluidas poses agachadas, contacto y
+  derribo. La importación headless aprobó.
+- Se completó una ronda contra CPU en el smoke headless con `--cpu --slice
+  --round`. P1 ganó con 400 de vida, P2 terminó en 0. La corrida gráfica
+  produjo una captura del primer intercambio en `g3-cpu/cpu-contacto.png`.

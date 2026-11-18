@@ -39,9 +39,12 @@ var _requested_3d := false
 func _enter_tree() -> void:
 	var cfg := get_node_or_null("/root/GameConfig")
 	if cfg != null:
-		# Asignar antes del _ready de los Fighter para cargar rig, stats y clips correctos.
-		$Player1.character_id = cfg.p1_character_id
-		$Player2.character_id = cfg.p2_character_id
+		# La escena conserva defaults pero los tests/escenas pueden asignar
+		# explícitamente otro personaje antes de entrar al árbol.
+		if $Player1.character_id == "guitarist":
+			$Player1.character_id = cfg.p1_character_id
+		if $Player2.character_id == "frontman":
+			$Player2.character_id = cfg.p2_character_id
 	var mode: StringName = StringName(presentation_mode)
 	if mode == &"default":
 		mode = cfg.fighter_presentation if cfg != null else &"3d"

@@ -90,3 +90,32 @@ con el validador y los tests. Los `.blend` viven en una carpeta con
 `.gdignore` para que Godot cargue solo los sprites del juego. Si preparás
 un preset de exportación de Godot, incluí los `manifest.json` dentro del
 filtro de archivos sin recursos y las texturas cargadas por ruta.
+
+
+## Nitidez en Godot (pase de noviembre 2026)
+
+Los personajes originales se muestran al **100 % de su escala de sprite**
+(en `fighter/fighter.gd`), sin la reducción a 0.85 que sigue reservada
+para KFM. El nodo `AnimatedSprite2D` utiliza filtrado **Nearest** de
+forma explícita; la configuración global del proyecto ya utiliza Nearest.
+
+Esto elimina una etapa de reescalado, **pero no recupera detalle
+que se haya perdido durante el render en Blender**. El lienzo exportado
+actual es 176 × 148 píxeles y el zoom dinámico de la cámara todavía
+produce escalas fraccionarias: puede aparecer pixelado o poco definido
+según la distancia de los luchadores.
+
+Para un siguiente pase de calidad, realizar una comparativa controlada:
+1. Capturar `idle` y `stand_lp` de ambos luchadores a la misma distancia.
+2. Revisar un PNG **original al 100 %** antes de evaluar Godot.
+3. Si el origen está suave, probar render en Blender con más samples,
+   sin motion blur ni depth of field y con iluminación/contornos más
+   contrastados. Evitar que el denoiser borre la forma de los ojos,
+   dedos e instrumentos.
+4. Si el origen está nítido pero la pantalla no, comparar el zoom
+   dinámico y la escala lógica del viewport antes de cambiar assets.
+5. **No activar pixel snapping global sin comparar movimiento y cámara**;
+   puede introducir saltos visibles en el scroll. No modificar las
+   hitboxes para corregir un defecto de render.
+6. Si se cambia `character_spec.json` (canvas/cámara), generar otra vez
+   los dos sets completos y revisar las anclas de pies.

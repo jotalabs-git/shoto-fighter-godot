@@ -54,7 +54,16 @@ func play_ko() -> void:
 
 func play_voice(character_id: String, action: String) -> void:
 	var who := SoundProfile.fighter_voice(character_id)
-	_play("voice_" + who + "_" + action, -10.0)
+	var default_key := "voice_" + who + "_" + action
+	if GameConfig.voice_style == "humor":
+		var funny_key := "voice_humor_" + who + "_" + action
+		if _bank.has(funny_key):
+			_play(funny_key, -10.0)
+			return
+	_play(default_key, -10.0)
+
+func play_announcer(event: String) -> void:
+	_play("announcer_" + event, -5.0)
 
 func _play(key: String, volume: float = 0.0) -> void:
 	if _players.is_empty():
@@ -94,21 +103,38 @@ func _build_bank() -> void:
 	_register("grab", 145.0, 0.105, 0.92, 0.39, 131)
 	_register("fall", 64.0, 0.310, 0.75, 0.95, 132)
 	_register("ko", 52.0, 0.510, 0.55, 0.95, 133)
+	for announcer in ["round_1", "round_2", "round_3", "fight", "winner", "game_over"]:
+		_register("announcer_" + announcer, 130.0, 0.12, 0.15, 0.25, 601)
 	for who in ["guitarist", "frontman", "neutral"]:
 		var base := 155.0 if who == "guitarist" else 113.0 if who == "frontman" else 137.0
 		var seed := 211 if who == "guitarist" else 311 if who == "frontman" else 411
 		_register("voice_" + who + "_effort_light", base * 1.15, 0.150, 0.25, 0.50, seed, true)
 		_register("voice_" + who + "_effort_heavy", base, 0.290, 0.35, 0.68, seed + 1, true)
 		_register("voice_" + who + "_hurt", base * 0.83, 0.235, 0.42, 0.63, seed + 2, true)
+		for action in ["effort_light", "effort_heavy", "hurt"]:
+			# Se activa únicamente cuando existe el archivo CC-BY instalado.
+			var humor_key := "voice_humor_" + who + "_" + action
+			var humor := _load_audio(humor_key)
+			if humor != null:
+				_bank[humor_key] = humor
 
 func _register(key: String, frequency: float, duration: float, noise: float, weight: float, seed: int, voiced: bool = false) -> void:
-	var custom := "res://assets/audio/" + key + ".ogg"
-	if ResourceLoader.exists(custom):
-		var stream := load(custom) as AudioStream
-		if stream != null:
-			_bank[key] = stream
-			return
+	var stream := _load_audio(key)
+	if stream != null:
+		_bank[key] = stream
+		return
 	_bank[key] = _synthesize(frequency, duration, noise, weight, seed, voiced)
+
+static func _load_audio(key: String) -> AudioStream:
+	# Versiones locales y seleccionadas primero; luego banco incluido CC0.
+	for base in ["res://assets/audio/local/", "res://assets/audio/"]:
+		for extension in [".ogg", ".wav"]:
+			var path := base + key + extension
+			if ResourceLoader.exists(path):
+				var stream := load(path) as AudioStream
+				if stream != null:
+					return stream
+	return null
 
 static func _synthesize(freq: float, dur: float, noise_amount: float, weight: float, seed: int, voiced: bool) -> AudioStreamWAV:
 	var count := maxi(1, int(float(SAMPLE_RATE) * dur))

@@ -4,8 +4,8 @@ extends Control
 func _ready() -> void:
 	var bg := ColorRect.new()
 	bg.color = RockBrand.STAGE_BLACK
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var title := Label.new()
 	title.text = "CREDITOS / AUDIO"
@@ -26,26 +26,29 @@ func _ready() -> void:
 	text_view.custom_minimum_size = Vector2(329, 0)
 	text_view.add_theme_font_size_override("normal_font_size", 10)
 	text_view.add_theme_color_override("default_color", RockBrand.METAL_SILVER)
-	text_view.text = (
-		"[color=#00E5FF]IMPACTOS Y LOCUCIONES ARCADE[/color]\n"
-		"Kenney - Impact Sounds y Voiceover Pack: Fighter.\n"
-		"Licencia: Creative Commons CC0 1.0.\n"
-		"[url=https://kenney.nl]kenney.nl[/url]\n\n"
-		"[color=#CC00FF]VOCES HUMORISTICAS / ATRIBUCION[/color]\n"
-		"24 cute fighting game voice recordings\n"
-		"Autor: bart (OpenGameArt). Licencia: CC BY 3.0.\n"
-		"[url=https://opengameart.org/content/24-cute-fighting-game-voice-recordings]Fuente: OpenGameArt.org[/url]\n"
-		"[url=https://creativecommons.org/licenses/by/3.0/]Licencia CC BY 3.0[/url]\n"
-		"Se seleccionan y renombran tomas al instalar.\n\n"
-		"[color=#00E5FF]GOLPES ADICIONALES[/color]\n"
-		"37 hits/punches - Independent.nu; CC0 1.0.\n"
-		"[url=https://opengameart.org/content/37-hitspunches]Fuente: OpenGameArt.org[/url]\n\n"
-		"[color=#FFC400]SONNISS (OPCIONAL)[/color]\n"
-		"GameAudioGDC: licencia especifica, no CC0.\n"
-		"Requiere descarga propia del paquete original.\n"
-		"[url=https://sonniss.com/gdc-bundle-license/]Terminos de Sonniss[/url]\n\n"
-		"Audio sintetico adicional: creado para Rock Kombat.\n"
-	)
+	text_view.text = """[color=#00E5FF]IMPACTOS Y LOCUCIONES ARCADE[/color]
+Kenney - Impact Sounds y Voiceover Pack: Fighter.
+Licencia: Creative Commons CC0 1.0.
+[url=https://kenney.nl]kenney.nl[/url]
+
+[color=#CC00FF]VOCES HUMORISTICAS / ATRIBUCION[/color]
+24 cute fighting game voice recordings
+Autor: bart (OpenGameArt). Licencia: CC BY 3.0.
+[url=https://opengameart.org/content/24-cute-fighting-game-voice-recordings]Fuente: OpenGameArt.org[/url]
+[url=https://creativecommons.org/licenses/by/3.0/]Licencia CC BY 3.0[/url]
+Se seleccionan y renombran tomas al instalar.
+
+[color=#00E5FF]GOLPES ADICIONALES[/color]
+37 hits/punches - Independent.nu; CC0 1.0.
+[url=https://opengameart.org/content/37-hitspunches]Fuente: OpenGameArt.org[/url]
+
+[color=#FFC400]SONNISS (OPCIONAL)[/color]
+GameAudioGDC: licencia especifica, no CC0.
+Requiere descarga propia del paquete original.
+[url=https://sonniss.com/gdc-bundle-license/]Terminos de Sonniss[/url]
+
+Audio sintetico adicional: creado para Rock Kombat.
+"""
 	text_view.meta_clicked.connect(_open_url)
 	scroll.add_child(text_view)
 

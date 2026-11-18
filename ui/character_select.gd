@@ -2,7 +2,8 @@ extends Control
 ## Arcade roster: two independent selections with live, standing GLB previews.
 ## The fighting rules stay in Fighter and MatchManager.
 
-const IDS := ["guitarist", "frontman", "ozzy", "bruce"]
+## El roster depende del registro único, no de IDs duplicados en la interfaz.
+var _ids: Array[String] = []
 const CYAN := Color("#00E5FF")
 const PINK := Color("#FF315A")
 const GOLD := Color("#FFCE52")
@@ -22,9 +23,10 @@ var _hints: Label
 var _launching := false
 
 func _ready() -> void:
+	_ids = CharacterRegistry.selectable_ids()
 	_is_cpu = GameConfig.p2_is_cpu
-	_indices[0] = maxi(IDS.find(GameConfig.p1_character_id), 0)
-	_indices[1] = maxi(IDS.find(GameConfig.p2_character_id), 0)
+	_indices[0] = maxi(_ids.find(GameConfig.p1_character_id), 0)
+	_indices[1] = maxi(_ids.find(GameConfig.p2_character_id), 0)
 	if _is_cpu:
 		_random_cpu()
 	_construct()
@@ -52,9 +54,9 @@ func _construct() -> void:
 		_status.append(status)
 
 	_label("SELECCIÓN", Vector2(131, 43), Vector2(122, 15), 10, WHITE, HORIZONTAL_ALIGNMENT_CENTER)
-	for index in IDS.size():
+	for index in _ids.size():
 		var b := Button.new()
-		b.text = CharacterRegistry.display_name(IDS[index]).replace("EL ", "").replace(" DICKINSON", "")
+		b.text = CharacterRegistry.display_name(_ids[index]).replace("EL ", "").replace(" DICKINSON", "")
 		b.position = Vector2(133.0 + float(index % 2) * 62.0, 64.0 + float(index / 2) * 52.0)
 		b.size = Vector2(59, 49)
 		b.add_theme_font_size_override("font_size", 9)
@@ -141,7 +143,7 @@ func _load_preview(side: int) -> void:
 		vp.remove_child(_models[side])
 		_models[side].queue_free()
 	_models[side] = null
-	var source_path := CharacterRegistry.model_path(IDS[_indices[side]])
+	var source_path := CharacterRegistry.model_path(_ids[_indices[side]])
 	if source_path.is_empty() or not ResourceLoader.exists(source_path):
 		_status[side].text = "GLB NO DISPONIBLE"
 		return
@@ -168,7 +170,7 @@ func _load_preview(side: int) -> void:
 
 func _refresh_all() -> void:
 	for side in 2:
-		_names[side].text = CharacterRegistry.display_name(IDS[_indices[side]])
+		_names[side].text = CharacterRegistry.display_name(_ids[_indices[side]])
 		_status[side].text = "CPU / ALEATORIO" if side == 1 and _is_cpu else ("LISTO" if _confirmed[side] else "ELEGIR + CONFIRMAR")
 		_load_preview(side)
 	_update_cards()
@@ -179,7 +181,7 @@ func _update_cards() -> void:
 		var p1 := _indices[0] == i
 		var p2 := _indices[1] == i
 		var marker := ("1" if p1 else "") + ("2" if p2 else "")
-		_cards[i].text = CharacterRegistry.display_name(IDS[i]).replace("EL ", "").replace(" DICKINSON", "") + ("  [" + marker + "]" if marker != "" else "")
+		_cards[i].text = CharacterRegistry.display_name(_ids[i]).replace("EL ", "").replace(" DICKINSON", "") + ("  [" + marker + "]" if marker != "" else "")
 		var accent := GOLD if p1 and p2 else CYAN if p1 else PINK if p2 else MUTED
 		_cards[i].add_theme_color_override("font_color", accent if p1 or p2 else WHITE)
 		var style := StyleBoxFlat.new()
@@ -190,8 +192,8 @@ func _update_cards() -> void:
 		_cards[i].add_theme_stylebox_override("normal", style)
 
 func _random_cpu() -> void:
-	var alternatives := IDS.size() - 1
-	_indices[1] = (_indices[0] + 1 + randi_range(0, alternatives - 1)) % IDS.size()
+	var alternatives := _ids.size() - 1
+	_indices[1] = (_indices[0] + 1 + randi_range(0, alternatives - 1)) % _ids.size()
 	_confirmed[1] = true
 
 func _pick_card(index: int) -> void:
@@ -205,11 +207,11 @@ func _pick_card(index: int) -> void:
 func _move_selection(side: int, index: int) -> void:
 	if _launching or _confirmed[side] or side == 1 and _is_cpu:
 		return
-	index = posmod(index, IDS.size())
+	index = posmod(index, _ids.size())
 	if _indices[side] == index:
 		return
 	_indices[side] = index
-	_names[side].text = CharacterRegistry.display_name(IDS[index])
+	_names[side].text = CharacterRegistry.display_name(_ids[index])
 	_status[side].text = "ELEGIR + CONFIRMAR"
 	_load_preview(side)
 	_update_cards()
@@ -222,11 +224,11 @@ func _confirm(side: int) -> void:
 	if _is_cpu:
 		_random_cpu()
 		_status[1].text = "CPU / ALEATORIO"
-		_names[1].text = CharacterRegistry.display_name(IDS[_indices[1]])
+		_names[1].text = CharacterRegistry.display_name(_ids[_indices[1]])
 		_load_preview(1)
 	if _confirmed[0] and _confirmed[1]:
 		_launching = true
-		GameConfig.set_characters(IDS[_indices[0]], IDS[_indices[1]])
+		GameConfig.set_characters(_ids[_indices[0]], _ids[_indices[1]])
 		get_tree().change_scene_to_file("res://match/match.tscn")
 
 func _process(_delta: float) -> void:
@@ -248,11 +250,11 @@ func _poll_player(side: int, prefix: String) -> void:
 		return
 	var index := _indices[side]
 	if Input.is_action_just_pressed(prefix + "_left"):
-		index = (index + IDS.size() - 1) % IDS.size()
+		index = (index + _ids.size() - 1) % _ids.size()
 	elif Input.is_action_just_pressed(prefix + "_right"):
-		index = (index + 1) % IDS.size()
+		index = (index + 1) % _ids.size()
 	elif Input.is_action_just_pressed(prefix + "_up") or Input.is_action_just_pressed(prefix + "_down"):
-		index = (index + 2) % IDS.size()
+		index = (index + 2) % _ids.size()
 	_move_selection(side, index)
 	if Input.is_action_just_pressed(prefix + "_lp") or Input.is_action_just_pressed(prefix + "_lk"):
 		_confirm(side)

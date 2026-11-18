@@ -67,6 +67,28 @@ Open the project in Godot and press **Play** (main scene: `res://match/match.tsc
 
 ---
 
+## 🪟 Windows desde Linux
+
+Para exportar Rock Kombat como ejecutable de Windows x86_64 sin necesitar
+Windows ni MinGW:
+
+```bash
+make windows
+# O una compilación de depuración:
+make windows-debug
+```
+
+Requiere las **plantillas de exportación oficiales de Godot** correspondientes
+a la versión del editor. La salida queda en
+`export/windows/RockKombat.exe` y `export/windows/RockKombat.pck`.
+Copiar ambos archivos juntos a Windows. Los catálogos `*.json` que usan
+los modelos 3D están incluidos en el preset.
+
+Detalles y solución de problemas:
+[`docs/export-windows.md`](docs/export-windows.md).
+
+---
+
 ## 🧪 Tests
 
 The project uses **[gdUnit4](https://github.com/godot-gdunit-labs/gdUnit4)** (bundled in `addons/`).

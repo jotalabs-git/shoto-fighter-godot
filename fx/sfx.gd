@@ -54,10 +54,10 @@ func play_ko() -> void:
 	_play("ko", -1.0)
 
 func play_voice(character_id: String, action: String) -> void:
-	var who := SoundProfile.fighter_voice(character_id)
-	var default_key := "voice_" + who + "_" + action
+	var who: String = SoundProfile.fighter_voice(character_id)
+	var default_key: String = "voice_" + who + "_" + action
 	if GameConfig.voice_style == "humor":
-		var funny_key := "voice_humor_" + who + "_" + action
+		var funny_key: String = "voice_humor_" + who + "_" + action
 		if _bank.has(funny_key):
 			_play(funny_key, -10.0)
 			return
@@ -123,7 +123,7 @@ func _build_bank() -> void:
 		_register("voice_" + who + "_hurt", base * 0.83, 0.235, 0.42, 0.63, seed + 2, true)
 		for action in ["effort_light", "effort_heavy", "hurt"]:
 			# Se activa únicamente cuando existe el archivo CC-BY instalado.
-			var humor_key := "voice_humor_" + who + "_" + action
+			var humor_key: String = "voice_humor_" + who + "_" + action
 			var humor := _load_audio(humor_key)
 			if humor != null:
 				_bank[humor_key] = humor
@@ -143,7 +143,7 @@ static func _load_audio(key: String) -> AudioStream:
 	# Versiones locales y seleccionadas primero; luego banco incluido CC0.
 	for base in ["res://assets/audio/local/", "res://assets/audio/"]:
 		for extension in [".ogg", ".wav"]:
-			var path := base + key + extension
+			var path: String = base + key + extension
 			if ResourceLoader.exists(path):
 				var stream := load(path) as AudioStream
 				if stream != null:

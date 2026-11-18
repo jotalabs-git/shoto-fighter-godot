@@ -27,3 +27,6 @@ capture.png
 *.blend1
 __pycache__/
 .render-cache.json
+
+# Librerías de audio externas instaladas localmente; no subir Sonic/GDC ni CC-BY sin auditoría.
+/assets/audio/local/

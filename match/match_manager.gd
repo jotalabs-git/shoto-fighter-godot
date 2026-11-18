@@ -14,6 +14,9 @@ extends Node2D
 @export var cam_max_zoom: float = 1.20
 @export var cam_margin: float = 85.0
 @export var cam_follow_speed: float = 5.0
+@export var throw_closeup_zoom: float = 1.55
+@export var throw_closeup_speed: float = 18.0
+@export var throw_closeup_frames: int = 20
 @export var p2_is_cpu: bool = false
 @export var cpu_difficulty: String = "medium"
 
@@ -27,6 +30,8 @@ var hud: HUD = null
 var match_state := MatchState.new()
 var sfx: Sfx = null
 var _shake: int = 0
+var _throw_closeup_remaining: int = 0
+var _throw_was_active: bool = false
 
 func _ready() -> void:
 	process_priority = 100   # correr DESPUÉS de que los fighters integren
@@ -86,7 +91,12 @@ func _physics_process(delta: float) -> void:
 	# Agarres y golpes durante intro/pelea
 	if can_act:
 		Throws.resolve(p1, p2, throw_range)
-		if Combat.resolve(p1, p2):
+	# Solo un agarre efectivo inicia la toma; throw tech nunca entra a Throw.
+	var throwing := _is_throwing()
+	if throwing and not _throw_was_active:
+		_throw_closeup_remaining = throw_closeup_frames
+	_throw_was_active = throwing
+	if Combat.resolve(p1, p2):
 			_on_hit(p2)
 		if Combat.resolve(p2, p1):
 			_on_hit(p1)
@@ -95,14 +105,21 @@ func _physics_process(delta: float) -> void:
 	# Cámara
 	if camera != null:
 		var cam := CameraLogic.compute(p1.position.x, p2.position.x, view_width, cam_min_zoom, cam_max_zoom, cam_margin)
+		var closeup := _throw_closeup_remaining > 0
+		if closeup:
+			cam = CameraLogic.throw_closeup(p1.position.x, p2.position.x, throw_closeup_zoom)
+			_throw_closeup_remaining -= 1
 		var off := 0.0
 		if _shake > 0:
 			off = 5.0 if (_shake % 2 == 0) else -5.0
 			_shake -= 1
 		# Acerca la cámara al pelear juntos y la aleja al retroceder.
 		# Interpolación exponencial para evitar saltos con FPS variables.
-		var follow := 1.0 - exp(-cam_follow_speed * delta)
+		var speed := throw_closeup_speed if closeup else cam_follow_speed
+		var follow := 1.0 - exp(-speed * delta)
 		camera.position.x = lerpf(camera.position.x, float(cam[0]), follow) + off
+		var target_y := 126.0 if closeup else 108.0
+		camera.position.y = lerpf(camera.position.y, target_y, follow)
 		var zoom := lerpf(camera.zoom.x, float(cam[1]), follow)
 		camera.zoom = Vector2(zoom, zoom)
 	_update_hud()
@@ -110,7 +127,17 @@ func _physics_process(delta: float) -> void:
 		match_state.reset_match()
 		_reset_round()
 
+## Se utiliza el estado real del atacante para no activar el primer plano
+## ante un intento fallido o un agarre neutralizado (throw tech).
+func _is_throwing() -> bool:
+	for fighter in [p1, p2]:
+		if fighter.state_machine.current_state != null and fighter.state_machine.current_state.name == "Throw":
+			return true
+	return false
+
 func _reset_round() -> void:
+	_throw_closeup_remaining = 0
+	_throw_was_active = false
 	p1.reset_for_round(Vector2(112.0, 180.0), true)
 	p2.reset_for_round(Vector2(272.0, 180.0), false)
 	if camera != null:
@@ -118,6 +145,7 @@ func _reset_round() -> void:
 		# desde una posición heredada del round anterior.
 		var cam := CameraLogic.compute(p1.position.x, p2.position.x, view_width, cam_min_zoom, cam_max_zoom, cam_margin)
 		camera.position.x = cam[0]
+		camera.position.y = 108.0
 		camera.zoom = Vector2(cam[1], cam[1])
 	for proj in get_tree().get_nodes_in_group("projectile"):
 		proj.queue_free()

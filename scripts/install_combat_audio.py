@@ -140,6 +140,26 @@ def _map_pack(key: str, directory: Path) -> list[dict]:
         for index, event in enumerate(HIT_KEYS):
             source = files[index % len(files)]
             mapped.append(_alias(source, event + "_oga"))
+    elif key == "kenney_impact":
+        categories = {
+            "hit_punch_light": "impactGeneric_light",
+            "hit_punch_medium": "impactPunch_medium",
+            "hit_punch_heavy": "impactPunch_heavy",
+            "hit_kick_light": "impactGeneric_light",
+            "hit_kick_medium": "impactPunch_medium",
+            "hit_kick_heavy": "impactPunch_heavy",
+            "hit_sweep": "impactWood_heavy",
+            "block": "impactMetal_medium",
+            "grab": "impactSoft_medium",
+            "fall": "impactSoft_heavy",
+            "hit_energy": "impactBell_heavy",
+        }
+        for event, name in categories.items():
+            matches = [p for p in files if p.stem.lower().startswith(name.lower() + "_")]
+            if matches:
+                # Seleccionar una toma diferente de la ya incluida en Git.
+                source = matches[1] if len(matches) > 1 else matches[0]
+                mapped.append(_alias(source, event + "_kenney"))
     return mapped
 
 

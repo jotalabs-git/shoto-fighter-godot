@@ -16,7 +16,7 @@ script = ExtResource("5")
 position = Vector2(192, 108)
 
 [node name="Player1" parent="." instance=ExtResource("2")]
-position = Vector2(130, 180)
+position = Vector2(112, 180)
 character_id = "guitarist"
 body_color = Color(0.25, 0.55, 0.95, 1)
 
@@ -25,7 +25,7 @@ script = ExtResource("3")
 player_prefix = "p1"
 
 [node name="Player2" parent="." instance=ExtResource("2")]
-position = Vector2(254, 180)
+position = Vector2(272, 180)
 character_id = "frontman"
 body_color = Color(0.95, 0.4, 0.32, 1)
 

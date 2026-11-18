@@ -1,0 +1,55 @@
+{
+  "canvas": [
+    176,
+    148
+  ],
+  "axis": [
+    79,
+    136
+  ],
+  "anims": {
+    "idle": {
+      "frames": 4,
+      "durs": [
+        7,
+        6,
+        7,
+        6
+      ],
+      "loop": true
+    },
+    "walk_fwd": {
+      "frames": 8,
+      "durs": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "loop": true
+    },
+    "stand_lp": {
+      "frames": 4,
+      "durs": [
+        4,
+        3,
+        3,
+        4
+      ],
+      "loop": false
+    },
+    "hurt": {
+      "frames": 3,
+      "durs": [
+        4,
+        4,
+        4
+      ],
+      "loop": false
+    }
+  }
+}

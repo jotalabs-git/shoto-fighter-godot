@@ -127,7 +127,7 @@ func _setup_sprite() -> void:
 	sprite.sprite_frames = frames
 	sprite.centered = false
 	sprite.offset = -CharacterFrames.get_axis(character_id)   # pies en el origen del fighter
-	sprite.modulate = CharacterRegistry.tint(character_id)
+	sprite.modulate = CharacterRegistry.tint(character_id) if frames == KfmFrames.get_frames() else Color.WHITE
 	sprite.play("idle")
 	visual.visible = false   # ocultar el rig geométrico; el sprite lo reemplaza
 

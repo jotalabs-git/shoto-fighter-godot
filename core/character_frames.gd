@@ -35,7 +35,11 @@ static func get_axis(character_id: String) -> Vector2:
 	return KfmFrames.axis
 
 static func has_custom_art(character_id: String) -> bool:
-	return _asset_folder(character_id) != ""
+	var folder := _asset_folder(character_id)
+	if folder == "":
+		return false
+	get_frames(character_id)
+	return _frames_cache.has(folder)
 
 static func _asset_folder(character_id: String) -> String:
 	# Solo los IDs registrados y con manifiesto pueden cargar arte.

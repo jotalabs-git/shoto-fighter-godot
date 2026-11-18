@@ -11,7 +11,8 @@ export_presets.cfg
 *.import
 
 # gdUnit4 reports
-/reports/
+/reports/*
+!/reports/.gdignore
 test_results.xml
 
 # OS / editor cruft
@@ -21,4 +22,8 @@ Thumbs.db
 
 capture.png
 
-/tools/
+/tools/*
+!/tools/blender/
+*.blend1
+__pycache__/
+.render-cache.json

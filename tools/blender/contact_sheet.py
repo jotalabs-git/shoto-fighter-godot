@@ -17,7 +17,8 @@ def main():
     if args.columns < 1:
         parser.error("--columns debe ser positivo")
     manifest = read_json(args.folder / "manifest.json")
-    cell_w, cell_h = manifest["canvas"]
+    density = manifest.get("pixels_per_unit", 1)
+    cell_w, cell_h = (side * density for side in manifest["canvas"])
     gutter = 4
     poses = args.poses or list(manifest["anims"])
     columns = min(args.columns, len(poses))
@@ -33,11 +34,11 @@ def main():
         if not 0 <= frame < count:
             parser.error(f"{pose}: índice fuera de rango")
         path = args.folder / action / f"{frame:03d}.png"
-        _, _, pixels = read_png(path, manifest["canvas"])
+        _, _, pixels = read_png(path, (cell_w, cell_h))
         x = gutter + i % columns * (cell_w + gutter)
         y = gutter + i // columns * (cell_h + gutter)
         index.append({"action": action, "frame": frame, "xy": [x, y]})
-        ground = manifest["axis"][1]
+        ground = manifest["axis"][1] * density
         for row in range(cell_h):
             bg = (60, 52, 76) if row == ground else background
             for col in range(cell_w):

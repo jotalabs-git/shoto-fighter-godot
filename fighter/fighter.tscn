@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://fighter/fighter.gd" id="1"]
 [ext_resource type="Script" path="res://fighter/state_machine.gd" id="2"]
@@ -14,6 +14,7 @@
 [ext_resource type="Script" path="res://fighter/states/throw.gd" id="12"]
 [ext_resource type="Script" path="res://fighter/states/knockdown.gd" id="13"]
 [ext_resource type="Script" path="res://fighter/states/thrown.gd" id="14"]
+[ext_resource type="Script" path="res://fighter/states/getup.gd" id="15"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(40, 96)
@@ -98,3 +99,6 @@ script = ExtResource("14")
 
 [node name="Knockdown" type="Node" parent="StateMachine"]
 script = ExtResource("13")
+
+[node name="Getup" type="Node" parent="StateMachine"]
+script = ExtResource("15")

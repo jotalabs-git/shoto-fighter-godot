@@ -26,6 +26,11 @@ Los PNG deben ser RGBA con fondo transparente y resolución consistente.
 `axis` es la coordenada del apoyo de pies respecto del lienzo.
 Las duraciones son ticks a 60 FPS.
 
+El campo opcional `pixels_per_unit` indica cuántos píxeles del PNG
+corresponden a cada unidad del lienzo. Con `3`, un `canvas` de
+`[176, 148]` requiere PNG de 528 × 444. `canvas` y `axis` siguen en
+unidades lógicas. Sin el campo, Godot interpreta el set como 1×.
+
 Para la versión definitiva conviene exportar todos los nombres
 de animación presentes en el manifiesto de KFM. La ausencia de una
 animación concreta se muestra en idle sin modificar el tiempo lógico

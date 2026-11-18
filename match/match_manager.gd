@@ -19,6 +19,7 @@ extends Node2D
 @export var throw_closeup_frames: int = 20
 @export var p2_is_cpu: bool = false
 @export var cpu_difficulty: String = "medium"
+@export_enum("default", "3d", "sprites") var presentation_mode := "default"
 
 @onready var camera: Camera2D = $Camera2D
 
@@ -29,9 +30,21 @@ var p2: Fighter
 var hud: HUD = null
 var match_state := MatchState.new()
 var sfx: Sfx = null
+var fighter_views: Combat3D
 var _shake: int = 0
 var _throw_closeup_remaining: int = 0
 var _throw_was_active: bool = false
+var _requested_3d := false
+
+func _enter_tree() -> void:
+	var cfg := get_node_or_null("/root/GameConfig")
+	var mode: StringName = StringName(presentation_mode)
+	if mode == &"default":
+		mode = cfg.fighter_presentation if cfg != null else &"3d"
+	_requested_3d = mode == &"3d" and not OS.get_cmdline_user_args().has("--sprites")
+	if _requested_3d:
+		for fighter: Fighter in [$Player1, $Player2]:
+			fighter.defer_sprite_setup = true
 
 func _ready() -> void:
 	process_priority = 100   # correr DESPUÉS de que los fighters integren
@@ -52,6 +65,7 @@ func _ready() -> void:
 		f.wall_right = stage_right
 		f.attack_cued.connect(_on_attack_cued.bind(f))
 		f.grab_cued.connect(_on_grab_cued.bind(f))
+		f.throw_release_cued.connect(_on_throw_release)
 		f.fall_cued.connect(_on_fall_cued)
 	if p2_is_cpu:
 		var ai := AIInput.new()
@@ -64,6 +78,16 @@ func _ready() -> void:
 	if hud != null:
 		hud.setup(p1, p2)
 	_reset_round()
+	if _requested_3d:
+		var candidate := Combat3D.new()
+		add_child(candidate)
+		move_child(candidate, $ConcertStage.get_index() + 1)
+		if candidate.configure(camera, [p1, p2]):
+			fighter_views = candidate
+		else:
+			candidate.queue_free()
+			for fighter in [p1, p2]:
+				fighter._setup_sprite()
 
 func _physics_process(delta: float) -> void:
 	if p1 == null or p2 == null:
@@ -81,12 +105,19 @@ func _physics_process(delta: float) -> void:
 		_reset_round()
 	elif ev == "fight" and sfx != null:
 		sfx.play_announcer("fight")
-	elif ev == "round_end" and sfx != null:
-		sfx.play_ko()
+	elif ev == "round_end":
+		for fighter in [p1, p2]:
+			if fighter.health <= 0 and fighter.state_machine.current_state.name != &"Knockdown":
+				fighter.begin_knockdown(&"normal")
+		if sfx != null:
+			sfx.play_ko()
 	elif ev == "match_end" and sfx != null:
 		sfx.play_announcer("winner")
 	# Pueden actuar en intro y pelea; se congelan en fin de round / fin de match.
 	var can_act := match_state.phase == MatchState.FIGHT or match_state.phase == MatchState.INTRO
+	if not can_act:
+		p1.cancel_throw_victim()
+		p2.cancel_throw_victim()
 	p1.frozen = not can_act
 	p2.frozen = not can_act
 	# Pushbox + paredes (siempre)
@@ -114,7 +145,8 @@ func _physics_process(delta: float) -> void:
 		var cam := CameraLogic.compute(p1.position.x, p2.position.x, view_width, cam_min_zoom, cam_max_zoom, cam_margin)
 		var closeup := _throw_closeup_remaining > 0
 		if closeup:
-			cam = CameraLogic.throw_closeup(p1.position.x, p2.position.x, throw_closeup_zoom)
+			var close_zoom := minf(throw_closeup_zoom, 1.38) if fighter_views != null else throw_closeup_zoom
+			cam = CameraLogic.throw_closeup(p1.position.x, p2.position.x, close_zoom)
 			_throw_closeup_remaining -= 1
 		var off := 0.0
 		if _shake > 0:
@@ -125,7 +157,7 @@ func _physics_process(delta: float) -> void:
 		var speed := throw_closeup_speed if closeup else cam_follow_speed
 		var follow := 1.0 - exp(-speed * delta)
 		camera.position.x = lerpf(camera.position.x, float(cam[0]), follow) + off
-		var target_y := 126.0 if closeup else 108.0
+		var target_y := (119.0 if fighter_views != null else 126.0) if closeup else 108.0
 		camera.position.y = lerpf(camera.position.y, target_y, follow)
 		var zoom := lerpf(camera.zoom.x, float(cam[1]), follow)
 		camera.zoom = Vector2(zoom, zoom)
@@ -189,6 +221,10 @@ func _on_attack_cued(move: MoveData, fighter: Fighter) -> void:
 func _on_grab_cued(fighter: Fighter) -> void:
 	if sfx != null:
 		sfx.play_grab(fighter)
+
+func _on_throw_release() -> void:
+	if sfx != null:
+		sfx.play_hit()
 
 func _on_fall_cued(character_id: String) -> void:
 	if sfx != null:

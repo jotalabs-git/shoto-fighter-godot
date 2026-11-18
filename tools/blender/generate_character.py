@@ -5,12 +5,14 @@ from math import radians, sin, cos
 from pathlib import Path
 
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Quaternion, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import REFERENCE, SOURCES, SPEC, blender_args, read_json
+from bruce import build_bruce
 from frontman import build_frontman
 from guitarist import build_guitarist
+from ozzy import build_ozzy
 from pose_controls import add_ik, align_ik_to_idle, pose_view
 from poses import BONES, STANCE, actions, joint_positions, points
 
@@ -46,6 +48,9 @@ def key_pose(rig, values, frame):
         aim = end - start
         rest_aim = rest_end - rest_start
         rotation = rest_aim.rotation_difference(aim).to_matrix().to_4x4()
+        roll = values.get("rolls", {}).get(name, 0)
+        if roll:
+            rotation = Quaternion(aim, roll).to_matrix().to_4x4() @ rotation
         rest_rotation = bone.bone.matrix_local.to_quaternion().to_matrix().to_4x4()
         # Keep sculpted volumes. A small longitudinal correction maintains
         # overlap at elbows and knees when a pose spreads or compresses.
@@ -100,14 +105,17 @@ def add_actions(rig, character, complete, attack_phases):
     scene.frame_set(1)
 
 
-def stage(settings):
+def stage(settings, art_facing):
     scene = bpy.context.scene
     width, height = settings["canvas"]
     ax, ay = settings["axis"]
+    if art_facing < 0:
+        ax = width - ax
+    density = settings["pixels_per_unit"]
     scale = settings["ortho_width"]
     angle = radians(settings["view_yaw_degrees"])
-    direction = Vector((sin(angle), -cos(angle), 0))
-    right = Vector((cos(angle), sin(angle), 0))
+    direction = Vector((sin(angle), -art_facing * cos(angle), 0))
+    right = Vector((art_facing * cos(angle), sin(angle), 0))
     center = ((.5 - ax / width) * scale * right
               + Vector((0, 0, (ay - height / 2) * scale / width)))
     camera = bpy.data.cameras.new("Calibrated sprite lens")
@@ -118,7 +126,9 @@ def stage(settings):
     obj.location = center + direction * 9
     obj.rotation_euler = (-direction).to_track_quat("-Z", "Y").to_euler()
     scene.camera = obj
+    scene["logical_canvas"] = [width, height]
     scene["axis"] = [ax, ay]
+    scene["pixels_per_unit"] = density
     scene.world = bpy.data.worlds.new("Neutral studio")
     scene.world.color = (.21, .21, .21)
     for name, location, power, color, size in [
@@ -130,19 +140,19 @@ def stage(settings):
         light.energy, light.color, light.shape, light.size = power, color, "DISK", size
         lamp = bpy.data.objects.new(name, light)
         scene.collection.objects.link(lamp)
-        lamp.location = location
+        lamp.location = (location[0], location[1] * art_facing, location[2])
         lamp.rotation_euler = (Vector((0, 0, 1.4)) - lamp.location).to_track_quat("-Z", "Y").to_euler()
     # CPU Cycles is available even on headless workstations without a GPU context.
     scene.render.engine = "CYCLES"
     scene.cycles.device = "CPU"
-    scene.cycles.samples = 24
+    scene.cycles.samples = 32
     scene.cycles.seed = 19
     scene.cycles.use_animated_seed = False
     scene.cycles.use_denoising = True
     scene.cycles.max_bounces = 4
     scene.render.use_persistent_data = True
     scene.render.fps = 60
-    scene.render.resolution_x, scene.render.resolution_y = width, height
+    scene.render.resolution_x, scene.render.resolution_y = width * density, height * density
     scene.render.resolution_percentage = 100
     scene.render.film_transparent = True
     scene.render.image_settings.file_format = "PNG"
@@ -156,12 +166,11 @@ def generate(args):
     settings = read_json(SPEC)
     character = settings["characters"][args.character]
     rig = make_rig()
-    if args.character == "guitarist":
-        build_guitarist(rig, character["palette"])
-    else:
-        build_frontman(rig, character["palette"])
+    builders = {"guitarist": build_guitarist, "frontman": build_frontman,
+                "ozzy": build_ozzy, "bruce": build_bruce}
+    builders[args.character](rig, character["palette"])
     add_ik(rig)
-    stage(settings["camera"])
+    stage(settings["camera"], character.get("art_facing", 1))
     add_actions(rig, args.character, args.full, settings["attack_phases"])
     align_ik_to_idle(rig)
     bpy.ops.object.select_all(action="DESELECT")

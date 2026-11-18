@@ -41,7 +41,7 @@ def strip_text_metadata(path):
         path.write_bytes(cleaned)
 
 
-def read_png(path, expected_size=None):
+def read_png(path, expected_size=None, *, alpha_only=False):
     compressed = bytearray()
     width = height = 0
     for index, (kind, part, _) in enumerate(chunks(path.read_bytes())):
@@ -66,19 +66,28 @@ def read_png(path, expected_size=None):
     if len(scanlines) != limit or not decoder.eof or decoder.unused_data:
         raise ValueError("longitud de píxeles inválida")
     decoded = bytearray()
-    above = bytes(stride)
+    pixel_size = 1 if alpha_only else 4
+    above = bytes(width * pixel_size)
     for start in range(0, len(scanlines), stride + 1):
         filter_id = scanlines[start]
-        current = bytearray(scanlines[start + 1:start + 1 + stride])
-        if filter_id > 4:
+        row = scanlines[start + 1:start + 1 + stride]
+        current = bytearray(row[3::4] if alpha_only else row)
+        if filter_id == 1:
+            for col in range(pixel_size, len(current)):
+                current[col] = (current[col] + current[col - pixel_size]) & 255
+        elif filter_id == 2:
+            current = bytearray((value + up) & 255 for value, up in zip(current, above))
+        elif filter_id == 3:
+            for col, up in enumerate(above):
+                left = current[col - pixel_size] if col >= pixel_size else 0
+                current[col] = (current[col] + (left + up) // 2) & 255
+        elif filter_id == 4:
+            for col, up in enumerate(above):
+                left = current[col - pixel_size] if col >= pixel_size else 0
+                diagonal = above[col - pixel_size] if col >= pixel_size else 0
+                current[col] = (current[col] + paeth(left, up, diagonal)) & 255
+        elif filter_id != 0:
             raise ValueError("filtro PNG desconocido")
-        if filter_id:
-            for col in range(stride):
-                left = current[col - 4] if col >= 4 else 0
-                diagonal = above[col - 4] if col >= 4 else 0
-                up = above[col]
-                prediction = (left, up, (left + up) // 2, paeth(left, up, diagonal))[filter_id - 1]
-                current[col] = (current[col] + prediction) & 255
         decoded.extend(current)
         above = current
     return width, height, decoded

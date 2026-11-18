@@ -65,6 +65,22 @@ static func _build(folder: String) -> SpriteFrames:
 		return null
 	if not animations.has("idle"):
 		return null
+	var density_value = data.get("pixels_per_unit", 1)
+	if not typeof(density_value) in [TYPE_INT, TYPE_FLOAT]:
+		return null
+	var density := int(density_value)
+	if density < 1 or density > 8 or float(density_value) != float(density):
+		return null
+	var resolution := Vector2i.ZERO
+	if density > 1:
+		var canvas = data.get("canvas")
+		if not canvas is Array or canvas.size() != 2:
+			return null
+		for length in canvas:
+			if not typeof(length) in [TYPE_INT, TYPE_FLOAT] or float(length) < 1.0 \
+					or float(length) * density > 4096.0 or float(length) != floorf(float(length)):
+				return null
+		resolution = Vector2i(int(canvas[0]), int(canvas[1])) * density
 	var frames := SpriteFrames.new()
 	var attack_phases := {}
 	if frames.has_animation("default"):
@@ -90,7 +106,7 @@ static func _build(folder: String) -> SpriteFrames:
 		for i in range(count):
 			var path := "%s/%s/%03d.png" % [folder, anim, i]
 			var tex := load(path) as Texture2D
-			if tex == null:
+			if tex == null or (resolution != Vector2i.ZERO and Vector2i(tex.get_size()) != resolution):
 				return null
 			frames.add_frame(anim, tex, maxf(float(durations[i]), 0.001))
 	# Requerimos idle para no dejar personajes invisibles. El Fighter puede
@@ -99,4 +115,5 @@ static func _build(folder: String) -> SpriteFrames:
 		return null
 	_axis_cache[folder] = Vector2(float(ax[0]), float(ax[1]))
 	frames.set_meta("attack_phases", attack_phases)
+	frames.set_meta("pixels_per_unit", density)
 	return frames

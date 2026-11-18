@@ -48,10 +48,12 @@ versión de Blender y el manifiesto, se reutilizan los PNG validados.
 `--diagnostics reports/character-art/rechazado` para guardar los
 fotogramas de una exportación rechazada.
 
-La cámara ortográfica exporta RGBA8 de **176 × 148**, con apoyo en
-**[79, 136]** y frente hacia la derecha. El margen adicional en X
-deja espacio para los derribos y las patadas extendidas. El eje se
-valida proyectando el origen fijo. Cada intervalo del manifiesto está
+La cámara ortográfica exporta RGBA8 de **528 × 444**, con densidad
+**3×** sobre el lienzo lógico de **176 × 148**. El eje lógico es
+**[79, 136]** para el Guitarrista y **[97, 136]** para el Frontman.
+La cámara exporta al Guitarrista hacia la derecha y al Frontman hacia
+la izquierda. Godot orienta el dibujo según el rival. Se valida el eje
+proyectando el origen fijo en píxeles de textura. Cada intervalo del manifiesto está
 en ticks de 60 Hz. Los ataques indican los índices de inicio del impacto
 y de la recuperación para ajustar la pose visual al estado del combate.
 Los efectos, hitboxes y tiempos lógicos pertenecen al motor de combate.
@@ -106,30 +108,66 @@ un preset de exportación de Godot, incluí los `manifest.json` dentro del
 filtro de archivos sin recursos y las texturas cargadas por ruta.
 
 
-## Nitidez en Godot (pase de noviembre 2026)
+## Nitidez en Godot
 
-Los personajes originales se muestran al **100 % de su escala de sprite**
-(en `fighter/fighter.gd`), sin la reducción a 0.85 que sigue reservada
-para KFM. El nodo `AnimatedSprite2D` utiliza filtrado **Nearest** de
-forma explícita; la configuración global del proyecto ya utiliza Nearest.
+El lienzo lógico conserva el tamaño de cada luchador. Godot compensa la
+densidad al dibujar el sprite y al trasladar el ancla de pies a
+coordenadas de textura. Los sets de alta densidad usan filtro lineal
+propio para el zoom fraccionario de la cámara. Los sets de densidad 1
+usan vecino más cercano.
 
-Esto elimina una etapa de reescalado, **pero no recupera detalle
-que se haya perdido durante el render en Blender**. El lienzo exportado
-actual es 176 × 148 píxeles y el zoom dinámico de la cámara todavía
-produce escalas fraccionarias: puede aparecer pixelado o poco definido
-según la distancia de los luchadores.
+Para revisar una exportación compará el PNG nativo y una captura de la
+misma pose, resolución y distancia de cámara. Un cambio de densidad,
+lienzo o eje requiere reexportar todas las acciones de ese personaje.
 
-Para un siguiente pase de calidad, realizar una comparativa controlada:
-1. Capturar `idle` y `stand_lp` de ambos luchadores a la misma distancia.
-2. Revisar un PNG **original al 100 %** antes de evaluar Godot.
-3. Si el origen está suave, probar render en Blender con más samples,
-   sin motion blur ni depth of field y con iluminación/contornos más
-   contrastados. Evitar que el denoiser borre la forma de los ojos,
-   dedos e instrumentos.
-4. Si el origen está nítido pero la pantalla no, comparar el zoom
-   dinámico y la escala lógica del viewport antes de cambiar assets.
-5. **No activar pixel snapping global sin comparar movimiento y cámara**;
-   puede introducir saltos visibles en el scroll. No modificar las
-   hitboxes para corregir un defecto de render.
-6. Si se cambia `character_spec.json` (canvas/cámara), generar otra vez
-   los dos sets completos y revisar las anclas de pies.
+## Modelos 3D para Godot
+
+```bash
+tools/blender/run.sh export-glb guitarist
+tools/blender/run.sh export-glb frontman
+godot --path . res://tools/blender/model_preview.tscn
+```
+
+La exportación usa los .blend existentes en modo lectura y escribe
+`assets/models/<id>.glb` y su catálogo JSON. Ver
+[arquitectura, clips y verificación](../../docs/personajes-3d.md).
+
+## Ozzy
+
+El archivo editable está en `tools/blender/sources/ozzy.blend`.
+Incluye el rig compartido, controles IK y poses de combate. La
+exportación añade el catálogo completo de 47 clips a 60 Hz.
+
+```bash
+tools/blender/run.sh export-glb ozzy
+godot --path . res://tools/blender/model_preview.tscn -- --ozzy
+```
+
+En el visor, las flechas cambian el clip y A/D giran el personaje.
+Ozzy está disponible en el visor y se puede instanciar como luchador
+de prueba con `character_id = "ozzy"`. La pelea predeterminada sigue
+usando al Guitarrista y al Frontman. Para reconstruir la fuente desde
+el código del escultor, usá `tools/blender/run.sh generate ozzy --full`.
+Ese comando sobrescribe `ozzy.blend`.
+
+La versión con la sonrisa ajustada se revisó de perfil y de tres
+cuartos en Blender. En Godot, Ozzy cargó los 47 clips y conectó un
+golpe fuerte en una pelea de prueba. Las 127 pruebas de Linux pasaron.
+
+## Bruce Dickinson
+
+El modelo editable está en `tools/blender/sources/bruce.blend`.
+La Union Jack está esculpida sobre ambas mangas, vinculada al hueso
+del brazo para que acompañe el movimiento. El GLB usa el rig
+compartido y el catálogo de 47 clips a 60 Hz.
+
+```bash
+tools/blender/run.sh export-glb bruce
+godot --path . res://tools/blender/model_preview.tscn -- --bruce
+```
+
+En el visor, las flechas cambian de clip y A/D giran el personaje.
+Para probarlo en combate se puede usar `character_id = "bruce"`.
+Dos exportaciones produjeron el mismo GLB y catálogo JSON. En Godot
+cargaron los 47 clips, Bruce conectó un golpe fuerte en una pelea de
+prueba y la suite Linux pasó las 127 pruebas.

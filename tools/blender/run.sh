@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Uso: $0 {generate|render} PERSONAJE [opciones]" >&2
+  echo "Uso: $0 {generate|render|export-glb} PERSONAJE [opciones]" >&2
 }
 if (( $# < 2 )); then
   usage
@@ -11,6 +11,7 @@ fi
 case "$1" in
   generate) script=generate_character.py ;;
   render) script=render_character.py ;;
+  export-glb) script=export_glb.py ;;
   *) usage; exit 2 ;;
 esac
 shift

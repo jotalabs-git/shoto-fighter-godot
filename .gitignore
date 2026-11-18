@@ -9,6 +9,8 @@ export_presets.cfg
 
 # Imported assets cache
 *.import
+# Keep the model animation import settings for fresh clones.
+!/assets/models/*.glb.import
 
 # gdUnit4 reports
 /reports/*

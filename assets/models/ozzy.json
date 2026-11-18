@@ -1,0 +1,243 @@
+{
+  "down_floor_offset": 0.1507,
+  "clips": {
+    "idle": {
+      "ticks": 31,
+      "loop": true
+    },
+    "walk_fwd": {
+      "ticks": 24,
+      "loop": true,
+      "travel": 2.2
+    },
+    "stand_lp": {
+      "ticks": 14,
+      "loop": false,
+      "impact": 4,
+      "recovery": 7
+    },
+    "hurt": {
+      "ticks": 12,
+      "loop": false
+    },
+    "walk_back": {
+      "ticks": 24,
+      "loop": true,
+      "travel": 1.72
+    },
+    "run": {
+      "ticks": 24,
+      "loop": true,
+      "travel": 2.55
+    },
+    "crouch": {
+      "ticks": 1,
+      "loop": true
+    },
+    "jump": {
+      "ticks": 22,
+      "loop": false
+    },
+    "stand_mp": {
+      "ticks": 21,
+      "loop": false,
+      "impact": 6,
+      "recovery": 9
+    },
+    "stand_hp": {
+      "ticks": 31,
+      "loop": false,
+      "impact": 9,
+      "recovery": 13
+    },
+    "stand_lk": {
+      "ticks": 16,
+      "loop": false,
+      "impact": 5,
+      "recovery": 8
+    },
+    "stand_mk": {
+      "ticks": 25,
+      "loop": false,
+      "impact": 7,
+      "recovery": 11
+    },
+    "stand_hk": {
+      "ticks": 35,
+      "loop": false,
+      "impact": 11,
+      "recovery": 15
+    },
+    "crouch_lp": {
+      "ticks": 13,
+      "loop": false,
+      "impact": 4,
+      "recovery": 7
+    },
+    "crouch_mp": {
+      "ticks": 20,
+      "loop": false,
+      "impact": 6,
+      "recovery": 9
+    },
+    "crouch_lk": {
+      "ticks": 14,
+      "loop": false,
+      "impact": 5,
+      "recovery": 7
+    },
+    "crouch_hk": {
+      "ticks": 34,
+      "loop": false,
+      "impact": 9,
+      "recovery": 12
+    },
+    "guard": {
+      "ticks": 1,
+      "loop": true
+    },
+    "guard_crouch": {
+      "ticks": 1,
+      "loop": true
+    },
+    "hurt_low": {
+      "ticks": 10,
+      "loop": false
+    },
+    "knockdown": {
+      "ticks": 11,
+      "loop": false,
+      "ground_contact": 6
+    },
+    "getup": {
+      "ticks": 13,
+      "loop": false
+    },
+    "throw": {
+      "ticks": 20,
+      "loop": false
+    },
+    "palm": {
+      "ticks": 43,
+      "loop": false,
+      "impact": 11,
+      "recovery": 16
+    },
+    "upper": {
+      "ticks": 35,
+      "loop": false,
+      "impact": 4,
+      "recovery": 10
+    },
+    "knee": {
+      "ticks": 31,
+      "loop": false,
+      "impact": 11,
+      "recovery": 19
+    },
+    "run_back": {
+      "ticks": 24,
+      "loop": true,
+      "travel": 2.3
+    },
+    "crouch_hp": {
+      "ticks": 28,
+      "loop": false,
+      "impact": 8,
+      "recovery": 12
+    },
+    "jump_lp": {
+      "ticks": 14,
+      "loop": false,
+      "impact": 4,
+      "recovery": 10
+    },
+    "jump_mp": {
+      "ticks": 15,
+      "loop": false,
+      "impact": 6,
+      "recovery": 11
+    },
+    "jump_hp": {
+      "ticks": 18,
+      "loop": false,
+      "impact": 8,
+      "recovery": 12
+    },
+    "crouch_enter": {
+      "ticks": 5,
+      "loop": false
+    },
+    "crouch_exit": {
+      "ticks": 5,
+      "loop": false
+    },
+    "jump_start": {
+      "ticks": 4,
+      "loop": false
+    },
+    "fall_air": {
+      "ticks": 15,
+      "loop": false
+    },
+    "land": {
+      "ticks": 6,
+      "loop": false
+    },
+    "crouch_mk": {
+      "ticks": 24,
+      "loop": false,
+      "impact": 7,
+      "recovery": 10
+    },
+    "jump_lk": {
+      "ticks": 21,
+      "loop": false,
+      "impact": 5,
+      "recovery": 13
+    },
+    "jump_mk": {
+      "ticks": 21,
+      "loop": false,
+      "impact": 7,
+      "recovery": 12
+    },
+    "jump_hk": {
+      "ticks": 23,
+      "loop": false,
+      "impact": 9,
+      "recovery": 13
+    },
+    "block_high": {
+      "ticks": 6,
+      "loop": false
+    },
+    "block_low": {
+      "ticks": 6,
+      "loop": false
+    },
+    "grabbed_hold": {
+      "ticks": 13,
+      "loop": false
+    },
+    "thrown_air": {
+      "ticks": 13,
+      "loop": false,
+      "ground_contact": 8
+    },
+    "knockdown_low": {
+      "ticks": 11,
+      "loop": false,
+      "ground_contact": 6
+    },
+    "down_hold": {
+      "ticks": 2,
+      "loop": false
+    },
+    "ko_fall": {
+      "ticks": 15,
+      "loop": false,
+      "ground_contact": 9
+    }
+  }
+}

@@ -7,6 +7,7 @@
     79,
     136
   ],
+  "pixels_per_unit": 3,
   "anims": {
     "idle": {
       "frames": 4,
@@ -69,6 +70,18 @@
       ],
       "loop": true
     },
+    "run": {
+      "frames": 6,
+      "durs": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "loop": true
+    },
     "crouch": {
       "frames": 1,
       "durs": [
@@ -86,18 +99,6 @@
         10
       ],
       "loop": false
-    },
-    "run": {
-      "frames": 6,
-      "durs": [
-        3,
-        3,
-        3,
-        3,
-        3,
-        3
-      ],
-      "loop": true
     },
     "stand_mp": {
       "frames": 4,

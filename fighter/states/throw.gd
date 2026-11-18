@@ -16,4 +16,4 @@ func physics_update(_delta: float) -> void:
 
 func exit() -> void:
 	# Evita dejar al rival inmovilizado si el atacante es interrumpido.
-	fighter.release_throw_victim()
+	fighter.cancel_throw_victim()

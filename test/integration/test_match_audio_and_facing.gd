@@ -5,18 +5,19 @@ extends GdUnitTestSuite
 const MATCH := preload("res://match/match.tscn")
 
 func _match() -> MatchManager:
-	var match: MatchManager = MATCH.instantiate()
-	add_child(match)
-	auto_free(match)
-	return match
+	var arena: MatchManager = MATCH.instantiate()
+	arena.presentation_mode = "sprites"
+	add_child(arena)
+	auto_free(arena)
+	return arena
 
 func test_match_initializes_audio_and_character_orientations() -> void:
-	var match := _match()
-	var guitarist: Fighter = match.p1
-	var frontman: Fighter = match.p2
+	var arena := _match()
+	var guitarist: Fighter = arena.p1
+	var frontman: Fighter = arena.p2
 
-	assert_object(match.sfx).is_not_null()
-	assert_bool(match.sfx._bank.has("hit_punch_light")).is_true()
+	assert_object(arena.sfx).is_not_null()
+	assert_bool(arena.sfx._bank.has("hit_punch_light")).is_true()
 	assert_int(guitarist.facing()).is_equal(1)
 	assert_int(frontman.facing()).is_equal(-1)
 	assert_int(CharacterRegistry.art_facing("guitarist")).is_equal(1)
@@ -24,15 +25,20 @@ func test_match_initializes_audio_and_character_orientations() -> void:
 
 	guitarist._process(0.0)
 	frontman._process(0.0)
-	# Ambos sprites conservan su orientación de autor; el del cantante
-	# se compensa en la presentación para verse de frente al guitarrista.
-	assert_float(guitarist.sprite.scale.x).is_equal_approx(0.85, 0.001)
-	assert_float(frontman.sprite.scale.x).is_equal_approx(0.85, 0.001)
+	for fighter: Fighter in [guitarist, frontman]:
+		var sprite := fighter.sprite
+		var facing := fighter.facing() * CharacterRegistry.art_facing(fighter.character_id)
+		var frame := sprite.sprite_frames.get_frame_texture("idle", 0)
+		assert_bool(sprite.texture_filter == CanvasItem.TEXTURE_FILTER_LINEAR).is_true()
+		assert_vector(frame.get_size()).is_equal(Vector2(528, 444))
+		assert_float(sprite.scale.x * 3.0).is_equal_approx(0.85 * facing, 0.001)
+		assert_float(sprite.scale.y * 3.0).is_equal_approx(0.85, 0.001)
+		assert_vector(sprite.offset).is_equal(-CharacterFrames.get_axis(fighter.character_id) * 3.0)
 
 func test_match_connects_a_punch_after_loading_sfx() -> void:
-	var match := _match()
-	var guitarist: Fighter = match.p1
-	var frontman: Fighter = match.p2
+	var arena := _match()
+	var guitarist: Fighter = arena.p1
+	var frontman: Fighter = arena.p2
 	guitarist.position.x = 140.0
 	frontman.position.x = 184.0
 	guitarist.start_move(guitarist.moves["st.lp"])

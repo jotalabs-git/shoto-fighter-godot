@@ -58,10 +58,36 @@ GUITAR_GUARD = {
     "knee_near": (.217, -.185, .682), "foot_near": (.373, -.213, .15),
     "knee_far": (-.333, .183, .696), "foot_far": (-.553, .220, .15),
 }
+OZZY_GUARD = {
+    "hips": (-.12, 0, 1.20), "neck": (.11, -.038, 1.91), "head": (.238, -.073, 2.54),
+    "shoulder_near": (.16, -.34, 1.78), "elbow_near": (.20, -.58, 1.51),
+    "hand_near": (.501, -.58, 1.75),
+    "shoulder_far": (-.02, .29, 1.82), "elbow_far": (.12, .44, 1.55),
+    "hand_far": (.464, .38, 1.83),
+    "knee_near": (.24, -.24, .70), "foot_near": (.424, -.272, .15),
+    "knee_far": (-.32, .23, .69), "foot_far": (-.51, .252, .15),
+}
+BRUCE_GUARD = {
+    "hips": (-.16, .012, 1.23), "neck": (.051, -.02, 1.93), "head": (.154, -.041, 2.56),
+    "shoulder_near": (.077, -.33, 1.808), "elbow_near": (.172, -.48, 1.556),
+    "hand_near": (.57, -.488, 1.879),
+    "shoulder_far": (.018, .281, 1.831), "elbow_far": (.023, .407, 1.575),
+    "hand_far": (.359, .299, 1.940),
+    "knee_near": (.291, -.20, .72), "foot_near": (.425, -.214, .15),
+    "knee_far": (-.39, .211, .70), "foot_far": (-.561, .253, .15),
+}
+
+
+def stance_for(character):
+    gestures = {"guitarist": GUITAR_GUARD, "frontman": FRONT, "ozzy": OZZY_GUARD, "bruce": BRUCE_GUARD}
+    return dict(STANCE, **gestures[character])
 
 
 def shifted(pose, dz):
-    return {name: (x, y, z + dz) for name, (x, y, z) in pose.items()}
+    result = {name: (x, y, z + dz) for name, (x, y, z) in pose.items() if name != "rolls"}
+    if "rolls" in pose:
+        result["rolls"] = pose["rolls"]
+    return result
 
 
 def cycle(base, count, period, stride, run=False):
@@ -138,7 +164,7 @@ def fallen(vocalist):
 
 def actions(character, full):
     vocalist = character == "frontman"
-    base = dict(STANCE, **(FRONT if vocalist else GUITAR_GUARD))
+    base = stance_for(character)
     bob = shifted(base, .04 if vocalist else .025)
     for key in ("foot_near", "foot_far"):
         bob[key] = base[key]
@@ -154,6 +180,14 @@ def actions(character, full):
     if vocalist:
         bob["hand_far"] = (.603, .178, 2.048)
         result["idle"] = [(5, base), (4, bob), (5, base), (4, result["idle"][-1][1])]
+    elif character == "ozzy":
+        open_guard = dict(bob, head=(.252, -.092, 2.542), hand_near=(.54, -.63, 1.81),
+                          hand_far=(.507, .43, 1.86))
+        result["idle"] = [(9, base), (8, open_guard), (7, base), (7, result["idle"][-1][1])]
+    elif character == "bruce":
+        bob["hand_near"] = (.562, -.503, 1.938)
+        bob["hand_far"] = (.392, .294, 1.953)
+        result["idle"] = [(6, base), (6, bob), (6, base), (5, result["idle"][-1][1])]
     else:
         bob["hand_near"] = (.505, -.498, 2.032)
         downbeat = result["idle"][-1][1]

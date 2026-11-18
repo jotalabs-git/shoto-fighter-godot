@@ -3,6 +3,7 @@ extends CharacterBody2D
 
 signal attack_cued(move: MoveData)
 signal grab_cued
+signal throw_release_cued
 signal fall_cued(character: String)
 
 ## Personaje genérico. La MISMA clase sirve para P1, P2 y CPU: consume un InputFrame por
@@ -67,6 +68,11 @@ var hitstun_frames: int = 0
 var hitstop_frames: int = 0
 var blockstun_frames: int = 0
 var knockdown_frames: int = 0
+var knockdown_style: StringName = &"normal"
+var last_hit_low := false
+var ko_ticks := 0
+var visual_round_revision := 0
+var defer_sprite_setup := false
 var throw_pressed: bool = false
 var throw_victim: Fighter = null
 var throw_direction: int = 1
@@ -79,8 +85,10 @@ var _numpad_history: Array = []
 var _projectile_spawned: bool = false
 
 const NEUTRAL_STATES := ["Idle", "Walk", "Crouch"]
+const THROW_CHORD_WINDOW := 4
 const THROW_DAMAGE := 120
 const KNOCKDOWN_FRAMES := 40
+const GETUP_FRAMES := 12
 const MOTION_WINDOW := 12
 const NUMPAD_HISTORY := 24
 const PUNCHES := ["hp", "mp", "lp"]
@@ -96,7 +104,8 @@ var _prev_buttons := [false, false, false, false, false, false]
 
 func _ready() -> void:
 	_apply_base_colors()
-	_setup_sprite()
+	if not defer_sprite_setup:
+		_setup_sprite()
 	health = max_health
 	moves = MoveSet.default_normals()
 	specials = Characters.specials_for(character_id)
@@ -114,10 +123,10 @@ func _ready() -> void:
 				break
 	state_machine.setup(self)
 
-# Escala visual uniforme para sprites originales y personajes Blender.
-# No altera hitboxes ni reglas de combate.
-const LEGACY_SPRITE_SCALE := 0.85
-const CUSTOM_SPRITE_SCALE := 0.85
+# Tamaño visual en unidades lógicas, independiente de la textura.
+const SPRITE_WORLD_SCALE := 0.85
+var _sprite_display_scale := SPRITE_WORLD_SCALE
+var _sprite_native_facing := 1
 const ATTACK_ANIM := {
 	"st.lp": "stand_lp", "st.mp": "stand_mp", "st.hp": "stand_hp",
 	"st.lk": "stand_lk", "st.mk": "stand_mk", "st.hk": "stand_hk",
@@ -134,11 +143,14 @@ func _setup_sprite() -> void:
 		sprite.visible = false
 		return
 	sprite.sprite_frames = frames
-	# Filtrado explícito: evita que el sprite herede un suavizado de otro CanvasItem.
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var custom := CharacterFrames.has_custom_art(character_id)
+	var density := int(frames.get_meta("pixels_per_unit", 1))
+	_sprite_display_scale = SPRITE_WORLD_SCALE / float(density)
+	_sprite_native_facing = CharacterRegistry.art_facing(character_id) if custom else 1
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR if density > 1 else CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite.centered = false
-	sprite.offset = -CharacterFrames.get_axis(character_id)   # pies en el origen del fighter
-	sprite.modulate = CharacterRegistry.tint(character_id) if frames == KfmFrames.get_frames() else Color.WHITE
+	sprite.offset = -CharacterFrames.get_axis(character_id) * float(density)
+	sprite.modulate = Color.WHITE if custom else CharacterRegistry.tint(character_id)
 	sprite.play("idle")
 	visual.visible = false   # ocultar el rig geométrico; el sprite lo reemplaza
 
@@ -160,6 +172,8 @@ func _sprite_anim(st: String) -> String:
 			return "hurt"
 		"Knockdown":
 			return "knockdown"
+		"Getup":
+			return "getup"
 		"Thrown":
 			return "hurt"
 		"Throw":
@@ -257,11 +271,8 @@ func _process(_delta: float) -> void:
 			# El estado físico controla el fotograma: ninguna de las dos poses
 			# avanza a distinta velocidad o queda fuera de sincronía.
 			_sync_grab_sprite(st, a)
-		var sprite_scale := CUSTOM_SPRITE_SCALE if CharacterFrames.has_custom_art(character_id) else LEGACY_SPRITE_SCALE
-		# La orientacion logica (hitboxes, bloqueos, movimiento) siempre mira al rival.
-		# Solo el arte del cantante fue exportado mirando hacia el otro lado.
-		var art_direction: int = CharacterRegistry.art_facing(character_id)
-		sprite.scale = Vector2(sprite_scale * facing() * art_direction, sprite_scale)
+		# La orientación del dibujo es independiente de la dirección física.
+		sprite.scale = Vector2(_sprite_display_scale * facing() * _sprite_native_facing, _sprite_display_scale)
 	queue_redraw()
 
 func _sync_grab_sprite(st: String, animation: String) -> void:
@@ -336,6 +347,11 @@ func _draw() -> void:
 			draw_rect(xr, Color(1.0, 0.4, 0.4, 0.9), false, 1.0)
 
 func _physics_process(delta: float) -> void:
+	throw_pressed = false
+	if health <= 0 and state_machine.current_state.name == &"Knockdown":
+		ko_ticks += 1
+		if ko_ticks == fall_contact_tick():
+			fall_cued.emit(character_id)
 	# Congelado entre rounds / fin de match: no procesa nada.
 	if frozen:
 		return
@@ -400,11 +416,24 @@ func _update_button_edges() -> void:
 			just_pressed.append(BTN_KEYS[i])
 	_prev_buttons = cur
 
-## Agarre: LP+LK (edge en uno con el otro mantenido), solo desde estado neutro.
+## Acepta LP+LK simultáneo o durante el arranque del primer normal liviano.
 func _update_throw_press() -> void:
 	var st := state_machine.current_state
-	var neutral := st != null and st.name in NEUTRAL_STATES
-	throw_pressed = neutral and ((("lp" in just_pressed) and input.lk) or (("lk" in just_pressed) and input.lp))
+	if st == null or not on_ground:
+		return
+	var punch := "lp" in just_pressed
+	var kick := "lk" in just_pressed
+	if st.name in NEUTRAL_STATES:
+		throw_pressed = (punch and input.lk) or (kick and input.lp)
+	elif st.name == &"Attack" and current_move != null and st.state_frame < THROW_CHORD_WINDOW:
+		# El estado avanza un tick antes de que MatchManager resuelva la llave.
+		if st.state_frame + 1 >= current_move.startup:
+			return
+		match current_move.move_name.to_lower():
+			"st.lp", "cr.lp":
+				throw_pressed = kick
+			"st.lk", "cr.lk":
+				throw_pressed = punch
 
 func facing() -> int:
 	return 1 if facing_right else -1
@@ -489,7 +518,7 @@ func spawn_projectile(m: MoveData) -> void:
 	get_parent().add_child(proj)
 
 func is_invulnerable() -> bool:
-	return invuln_frames > 0
+	return invuln_frames > 0 or state_machine.current_state.name == &"Thrown"
 
 ## True si el fighter tiene un hitbox activo este frame.
 func is_attack_active() -> bool:
@@ -536,11 +565,10 @@ func receive_hit(m: MoveData, attacker_facing: int) -> void:
 		combo_count = 1
 	var dmg := DamageCalculator.scaled_damage(m.damage, combo_count - 1)
 	health = max(health - dmg, 0)
+	last_hit_low = m.hits_low
 	vel = Vector2(attacker_facing * m.pushback, 0.0)
-	if m.causes_knockdown:
-		knockdown_frames = KNOCKDOWN_FRAMES
-		state_machine.transition_to("Knockdown")
-		fall_cued.emit(character_id)
+	if m.causes_knockdown or health == 0:
+		begin_knockdown(&"low" if m.hits_low else &"normal")
 	else:
 		hitstun_frames = m.hitstun
 		state_machine.transition_to("Hitstun")
@@ -551,12 +579,17 @@ func receive_block(m: MoveData, attacker_facing: int) -> void:
 	health = max(health - chip, 0)
 	blockstun_frames = m.blockstun
 	vel = Vector2(attacker_facing * m.pushback * 0.5, 0.0)
-	state_machine.transition_to("Blockstun")
+	if health == 0:
+		begin_knockdown(&"normal")
+	else:
+		state_machine.transition_to("Blockstun")
 
 func is_throwable() -> bool:
 	return on_ground and (state_machine.current_state != null and state_machine.current_state.name in NEUTRAL_STATES)
 
 func do_throw(victim: Fighter) -> void:
+	if throw_victim != null or not victim.is_throwable():
+		return
 	current_move = null
 	grab_cued.emit()
 	throw_victim = victim
@@ -576,16 +609,35 @@ func release_throw_victim() -> void:
 		return
 	var victim := throw_victim
 	throw_victim = null
-	victim.release_thrown()
+	if victim.state_machine.current_state.name == &"Thrown":
+		victim.release_thrown()
+		throw_release_cued.emit()
+
+func cancel_throw_victim() -> void:
+	if throw_victim == null:
+		return
+	var victim := throw_victim
+	throw_victim = null
+	if victim.state_machine.current_state.name == &"Thrown":
+		victim.state_machine.transition_to("Idle")
+
+func begin_knockdown(style: StringName) -> void:
+	knockdown_style = style
+	knockdown_frames = KNOCKDOWN_FRAMES
+	ko_ticks = 0
+	state_machine.transition_to("Knockdown")
+
+func fall_contact_tick() -> int:
+	if knockdown_style == &"throw":
+		return 8
+	return 13 if health <= 0 else 10
 
 func release_thrown() -> void:
 	if state_machine.current_state == null or state_machine.current_state.name != "Thrown":
 		return
 	health = maxi(health - THROW_DAMAGE, 0)
-	knockdown_frames = KNOCKDOWN_FRAMES
 	vel = Vector2(float(throw_direction) * 120.0, 0.0)
-	state_machine.transition_to("Knockdown")
-	fall_cued.emit(character_id)
+	begin_knockdown(&"throw")
 
 func throw_tech() -> void:
 	current_move = null
@@ -594,6 +646,8 @@ func throw_tech() -> void:
 
 ## Reinicia al fighter para un nuevo round.
 func reset_for_round(pos: Vector2, faces_right: bool) -> void:
+	cancel_throw_victim()
+	visual_round_revision += 1
 	position = pos
 	vel = Vector2.ZERO
 	health = max_health
@@ -601,7 +655,11 @@ func reset_for_round(pos: Vector2, faces_right: bool) -> void:
 	hitstun_frames = 0
 	blockstun_frames = 0
 	knockdown_frames = 0
+	knockdown_style = &"normal"
+	last_hit_low = false
+	ko_ticks = 0
 	throw_victim = null
+	throw_pressed = false
 	throw_direction = 1
 	hitstop_frames = 0
 	invuln_frames = 0

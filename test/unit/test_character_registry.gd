@@ -27,4 +27,4 @@ func test_frontman_loads_an_independent_sprite_set() -> void:
 	assert_bool(frames != KfmFrames.get_frames()).is_true()
 	assert_bool(frames != CharacterFrames.get_frames("guitarist")).is_true()
 	assert_str(frames.get_frame_texture("idle", 0).resource_path).contains("/frontman/idle/")
-	assert_vector(CharacterFrames.get_axis("frontman")).is_equal(Vector2(79, 136))
+	assert_vector(CharacterFrames.get_axis("frontman")).is_equal(Vector2(97, 136))

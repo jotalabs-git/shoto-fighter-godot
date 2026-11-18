@@ -2,13 +2,13 @@ class_name CharacterRegistry
 extends RefCounted
 
 ## Catálogo de identidades visuales, separado de Characters (estadísticas
-## y especiales). Los dos músicos provisionales reutilizan la jugabilidad
-## actual hasta diseñar movimientos propios.
+## y especiales). Los músicos reutilizan la jugabilidad actual.
 const ENTRIES := {
 	"kaze": {"name": "KAZE", "folder": "", "tint": Color(0.72, 0.82, 1.0)},
 	"homura": {"name": "HOMURA", "folder": "", "tint": Color(1.0, 0.86, 0.82)},
 	"guitarist": {"name": "EL GUITARRISTA", "folder": "res://assets/characters/guitarist", "tint": Color(0.72, 0.82, 1.0), "art_facing": 1},
 	"frontman": {"name": "EL FRONTMAN", "folder": "res://assets/characters/frontman", "tint": Color(1.0, 0.86, 0.82), "art_facing": -1},
+	"bruce": {"name": "BRUCE DICKINSON", "folder": "", "tint": Color(0.85, 0.75, 0.66)},
 }
 
 static func display_name(character_id: String) -> String:

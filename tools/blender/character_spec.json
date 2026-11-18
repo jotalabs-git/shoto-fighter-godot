@@ -2,6 +2,7 @@
   "camera": {
     "canvas": [176, 148],
     "axis": [79, 136],
+    "pixels_per_unit": 3,
     "ortho_width": 4.4,
     "view_yaw_degrees": 12
   },
@@ -22,10 +23,33 @@
     },
     "frontman": {
       "label": "El Frontman",
+      "art_facing": -1,
       "palette": {
         "skin": "ce7853", "hair": "38152a", "hair_light": "af3261",
         "trim": "ff8472", "accent": "59bfd0",
         "pants": "676c51", "boots": "2c2730", "metal": "d7c8c8"
+      }
+    },
+    "ozzy": {
+      "label": "Ozzy",
+      "palette": {
+        "skin": "c4917d", "hair": "251c23", "hair_ridge": "413038",
+        "coat": "2b2232", "lapel": "49354d", "vest": "442431",
+        "pants": "2d2b38", "boots": "2c2532", "sole": "201b29",
+        "lace": "625467", "nickel": "978899", "metal": "c8bdca",
+        "frame": "a79eaa", "lens": "241528", "gem": "842948",
+        "lip": "a5605b", "enamel": "eadcc3"
+      }
+    },
+    "bruce": {
+      "label": "Bruce Dickinson",
+      "palette": {
+        "skin": "cc9a77", "lip": "ab695b", "iris": "816041", "brow": "472a22",
+        "hair": "633b28", "hair_ridge": "795036", "copper": "a36a43",
+        "leather": "302a2a", "lapel": "494044", "tee": "28282e", "metal": "c7b9ae",
+        "denim": "4f6277", "stitch": "7d7d83", "boots": "2e2728",
+        "sole": "242329", "lace": "615554", "nickel": "9c8f89", "rubber": "251f23",
+        "flag_blue": "223f6a", "flag_white": "f4e6d0", "flag_red": "b72638"
       }
     }
   }

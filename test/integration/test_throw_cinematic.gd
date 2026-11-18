@@ -33,6 +33,9 @@ func test_throw_holds_victim_before_impact_then_applies_damage_once() -> void:
 	assert_int(victim.health).is_equal(victim.max_health - Fighter.THROW_DAMAGE)
 	attacker.release_throw_victim()
 	assert_int(victim.health).is_equal(victim.max_health - Fighter.THROW_DAMAGE)
+	for i in range(8):
+		attacker.state_machine.physics_update(1.0 / 60.0)
+	assert_str(attacker.state_machine.current_state.name).is_equal("Idle")
 
 func test_throw_interruption_releases_victim() -> void:
 	var fighters := _fighters()
@@ -40,8 +43,9 @@ func test_throw_interruption_releases_victim() -> void:
 	var victim: Fighter = fighters[1]
 	attacker.do_throw(victim)
 	attacker.state_machine.transition_to("Idle")
-	assert_str(victim.state_machine.current_state.name).is_equal("Knockdown")
-	assert_int(victim.health).is_equal(victim.max_health - Fighter.THROW_DAMAGE)
+	assert_str(victim.state_machine.current_state.name).is_equal("Idle")
+	assert_int(victim.health).is_equal(victim.max_health)
+	assert_bool(attacker.throw_victim == null).is_true()
 
 func test_throw_works_when_second_fighter_attacks() -> void:
 	var fighters := _fighters()

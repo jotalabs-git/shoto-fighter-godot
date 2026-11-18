@@ -11,14 +11,12 @@ from png import read_png
 
 
 def validate_frame(path, canvas):
-    width, height, pixels = read_png(path, canvas)
-    alpha = pixels[3::4]
+    width, height, alpha = read_png(path, canvas, alpha_only=True)
     if 0 not in alpha or 255 not in alpha:
         raise ValueError("se requieren píxeles transparentes y opacos")
     border = alpha[:width] + alpha[-width:] + alpha[::width] + alpha[width - 1::width]
     if any(value >= 128 for value in border):
         raise ValueError("silueta cortada por el borde del lienzo")
-    return width, height, pixels
 
 
 def validate(folder, complete=False):
@@ -37,6 +35,10 @@ def validate(folder, complete=False):
     if not (isinstance(axis, list) and len(axis) == 2
             and all(type(value) is int and 0 <= value < length for value, length in zip(axis, canvas))):
         errors.append("axis: se requieren dos coordenadas enteras dentro del canvas")
+    density = manifest.get("pixels_per_unit", 1)
+    if type(density) is not int or not 1 <= density <= 8 or max(canvas) * density > 4096:
+        return errors + ["pixels_per_unit: se requiere un entero entre 1 y 8 y una textura de hasta 4096 px"]
+    resolution = [length * density for length in canvas]
     actions = manifest.get("anims")
     if not isinstance(actions, dict):
         return errors + ["anims: se esperaba un objeto"]
@@ -77,7 +79,7 @@ def validate(folder, complete=False):
             try:
                 if path.is_symlink():
                     raise ValueError("enlace simbólico no permitido")
-                validate_frame(path, canvas)
+                validate_frame(path, resolution)
             except (OSError, ValueError, zlib.error) as error:
                 errors.append(f"{name}/{file}: {error}")
     for directory in sorted(folder.iterdir()):

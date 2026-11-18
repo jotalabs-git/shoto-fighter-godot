@@ -101,7 +101,37 @@ func test_throw_tech_when_both_grab() -> void:
 		Throws.resolve(atk, dfn, 60.0)
 	assert_int(atk.health).is_equal(1000)    # tech: sin daño
 	assert_int(dfn.health).is_equal(1000)
-	assert_str(dfn.state_machine.current_state.name).is_not_equal("Knockdown")
+	assert_str(atk.state_machine.current_state.name).is_equal("Idle")
+	assert_str(dfn.state_machine.current_state.name).is_equal("Idle")
+
+func test_staggered_light_buttons_grab_in_either_order() -> void:
+	for kick_first in [false, true]:
+		var t := _duo(100.0, 146.0)
+		var atk: Fighter = t[0]
+		var dfn: Fighter = t[2]
+		t[1].frame.lp = not kick_first
+		t[1].frame.lk = kick_first
+		for i in 2:
+			await get_tree().physics_frame
+		t[1].frame.lp = true
+		t[1].frame.lk = true
+		await get_tree().physics_frame
+		Throws.resolve(atk, dfn, 60.0)
+		assert_str(dfn.state_machine.current_state.name).is_equal("Thrown")
+		assert_int(dfn.health).is_equal(dfn.max_health)
+
+func test_active_light_attack_does_not_turn_into_a_grab() -> void:
+	var t := _duo(100.0, 146.0)
+	var atk: Fighter = t[0]
+	var dfn: Fighter = t[2]
+	t[1].frame.lp = true
+	for i in 5:
+		await get_tree().physics_frame
+	t[1].frame.lk = true
+	await get_tree().physics_frame
+	Throws.resolve(atk, dfn, 60.0)
+	assert_str(atk.state_machine.current_state.name).is_equal("Attack")
+	assert_str(dfn.state_machine.current_state.name).is_equal("Idle")
 
 func test_sweep_causes_knockdown() -> void:
 	var t := _duo(100.0, 136.0)

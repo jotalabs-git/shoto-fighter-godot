@@ -36,23 +36,29 @@ def export(args):
     if unknown:
         raise ValueError(f"acciones no disponibles: {', '.join(sorted(unknown))}")
 
-    canvas = [scene.render.resolution_x, scene.render.resolution_y]
+    resolution = [scene.render.resolution_x, scene.render.resolution_y]
+    canvas = list(scene.get("logical_canvas", resolution))
+    density = int(scene.get("pixels_per_unit", 1))
     projection = world_to_camera_view(scene, scene.camera, Vector((0, 0, 0)))
-    axis = [round(projection.x * canvas[0]), round((1 - projection.y) * canvas[1])]
-    calibration = list(scene["axis"])
-    if axis != calibration or scene.render.resolution_percentage != 100:
-        raise ValueError(f"proyección {axis} distinta de la calibración {calibration}")
+    axis = list(scene["axis"])
+    projected_axis = [round(projection.x * resolution[0]), round((1 - projection.y) * resolution[1])]
+    if (resolution != [side * density for side in canvas]
+            or projected_axis != [value * density for value in axis]
+            or scene.render.resolution_percentage != 100):
+        raise ValueError(f"proyección {projected_axis} incompatible con canvas {canvas} y eje {axis} a {density}×")
 
     target = args.output or ASSETS / args.character
     prior = target / "manifest.json"
-    manifest = read_json(prior) if prior.exists() else {"canvas": canvas, "axis": axis, "anims": {}}
+    layout = {"canvas": canvas, "axis": axis, "pixels_per_unit": density}
+    manifest = read_json(prior) if prior.exists() else {**layout, "anims": {}}
     known = read_json(REFERENCE)["anims"]
     if set(manifest["anims"]) - known.keys():
         raise ValueError(f"{prior}: contiene nombres de animación no admitidos")
-    if manifest["canvas"] != canvas or manifest["axis"] != axis:
+    if (manifest["canvas"] != canvas or manifest["axis"] != axis
+            or manifest.get("pixels_per_unit", 1) != density):
         if set(manifest["anims"]) - set(selected):
             raise ValueError("cambió la calibración, reexportá todas las acciones existentes")
-        manifest = {"canvas": canvas, "axis": axis, "anims": {}}
+        manifest = {**layout, "anims": {}}
 
     target.parent.mkdir(parents=True, exist_ok=True)
     cache_path = target / ".render-cache.json"
@@ -60,7 +66,7 @@ def export(args):
     for directory in target.iterdir() if target.exists() else ():
         if directory.is_symlink():
             raise ValueError(f"{directory}: enlace simbólico no permitido")
-        if directory.is_dir() and directory.name not in manifest["anims"] and any(directory.glob("*.png")):
+        if directory.is_dir() and directory.name not in known and any(directory.glob("*.png")):
             raise ValueError(f"{directory}: carpeta con PNG fuera del manifiesto")
 
     # Stage the full proposed export on the same filesystem and validate before replacing files.
@@ -73,7 +79,7 @@ def export(args):
                     if file.is_symlink():
                         raise ValueError(f"{file}: enlace simbólico no permitido")
                 shutil.copytree(old, stage / name, ignore=shutil.ignore_patterns("*.import"))
-        if target.exists():
+        if not args.force and target.exists() and any(cache.get(name) == fingerprint for name in selected):
             prior_errors = validate(target)
         else:
             prior_errors = ["exportación nueva"]

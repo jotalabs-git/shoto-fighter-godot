@@ -263,3 +263,23 @@ contra CPU. Las tres tipografías versionadas pasaron la validación de
 proveniencia y cargaron en Godot. La primera importación se cerró con
 los TTF en paralelo. La repetición pasó con importación secuencial en
 un perfil temporal del editor.
+
+## Nitidez de los sprites en juego
+
+El set anterior tenía PNG de 176 × 148 píxeles. El tamaño del personaje
+en ventana y el zoom de cámara agrandaban esa textura con vecino más
+cercano. La exportación actual renderiza directamente a 528 × 444 con
+32 muestras en Cycles y densidad de tres píxeles por unidad lógica.
+Godot compensa la densidad y usa filtro lineal en los dos modelos.
+
+El tamaño que ocupa cada luchador en juego sigue siendo el mismo.
+Blender proyectó el origen a [237, 408] para el Guitarrista y
+[291, 408] para el Frontman en píxeles de textura. La cámara del
+Frontman se ajustó al lado que corresponde a su orientación de arte.
+Los tiempos y el inventario de acciones se mantuvieron.
+
+Se validaron 226 PNG en 52 acciones y se reprodujeron cuatro imágenes
+de reposo byte por byte. La suite de Godot aprobó 118 pruebas. El smoke
+gráfico comprobó caminata, impacto, hitstop y reacción de ambos
+luchadores. Las capturas de 1280 × 720 de la misma pelea y el recorte
+comparativo están en `reports/character-art/hd/`.

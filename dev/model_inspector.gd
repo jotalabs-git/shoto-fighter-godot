@@ -16,6 +16,11 @@ var world: Node3D
 var camera: Camera3D
 var display_root: Node3D
 var animation_player: AnimationPlayer
+var animation_picker: OptionButton
+var play_button: Button
+var pause_button: Button
+var stop_button: Button
+var animation_entries: Array[Dictionary] = []
 var yaw := 0.4
 var pitch := 0.15
 var distance := 3.5
@@ -90,6 +95,28 @@ func _build_interface() -> void:
 	container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	container.gui_input.connect(_on_viewport_input)
 	right.add_child(container)
+	var controls := HBoxContainer.new()
+	right.add_child(controls)
+	var anim_label := Label.new()
+	anim_label.text = "Animación:"
+	controls.add_child(anim_label)
+	animation_picker = OptionButton.new()
+	animation_picker.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	animation_picker.item_selected.connect(_on_animation_selected)
+	controls.add_child(animation_picker)
+	play_button = Button.new()
+	play_button.text = "▶ Reproducir"
+	play_button.pressed.connect(_play_selected_animation)
+	controls.add_child(play_button)
+	pause_button = Button.new()
+	pause_button.text = "⏸ Pausar"
+	pause_button.pressed.connect(_toggle_animation_pause)
+	controls.add_child(pause_button)
+	stop_button = Button.new()
+	stop_button.text = "⏹ Detener"
+	stop_button.pressed.connect(_stop_animation)
+	controls.add_child(stop_button)
+	_refresh_animation_controls()
 	viewport = SubViewport.new()
 	viewport.size = Vector2i(960, 540)
 	viewport.transparent_bg = false
@@ -133,17 +160,6 @@ func _build_world() -> void:
 	rim.rotation_degrees = Vector3(-30, 145, 0)
 	rim.light_energy = 0.75
 	world.add_child(rim)
-	var grid_mesh := PlaneMesh.new()
-	grid_mesh.size = Vector2(20, 20)
-	var grid := MeshInstance3D.new()
-	grid.name = "ReferenceFloor"
-	grid.mesh = grid_mesh
-	grid.position.y = -0.01
-	var floor_material := StandardMaterial3D.new()
-	floor_material.albedo_color = Color("#343d51")
-	floor_material.roughness = 1.0
-	grid.material_override = floor_material
-	world.add_child(grid)
 	_update_camera()
 
 
@@ -228,6 +244,8 @@ func _clear_model() -> void:
 	if is_instance_valid(display_root):
 		display_root.free()
 	display_root = null
+	animation_entries.clear()
+	_refresh_animation_controls()
 
 
 func _inspect_model(root: Node) -> String:
@@ -236,6 +254,7 @@ func _inspect_model(root: Node) -> String:
 	var surfaces := 0
 	var skeletons := 0
 	var animations := 0
+	animation_entries.clear()
 	while not stack.is_empty():
 		var node: Node = stack.pop_back()
 		if node is MeshInstance3D:
@@ -245,17 +264,88 @@ func _inspect_model(root: Node) -> String:
 		if node is Skeleton3D:
 			skeletons += 1
 		if node is AnimationPlayer:
+			var player := node as AnimationPlayer
 			if animation_player == null:
-				animation_player = node as AnimationPlayer
-			animations += (node as AnimationPlayer).get_animation_list().size()
+				animation_player = player
+			for anim_name in player.get_animation_list():
+				if anim_name == "RESET":
+					continue
+				animation_entries.append({"player": player, "name": anim_name})
+				animations += 1
 		for child in node.get_children():
 			stack.append(child)
-	if animation_player != null:
-		for anim_name in animation_player.get_animation_list():
-			if anim_name != "RESET":
-				animation_player.play(anim_name)
-				break
-	return "Meshes: %d  |  Superficies: %d  |  Esqueletos: %d  |  Animaciones: %d" % [meshes, surfaces, skeletons, animations]
+	_refresh_animation_controls()
+	return "Meshes: %d  |  Superficies: %d  |  Esqueletos: %d  |  Animaciones disponibles: %d" % [meshes, surfaces, skeletons, animations]
+
+
+func _refresh_animation_controls() -> void:
+	if animation_picker == null:
+		return
+	animation_picker.clear()
+	for entry in animation_entries:
+		animation_picker.add_item(str(entry["name"]))
+	var available := not animation_entries.is_empty()
+	animation_picker.disabled = not available
+	play_button.disabled = not available
+	pause_button.disabled = not available
+	stop_button.disabled = not available
+	pause_button.text = "⏸ Pausar"
+	if available:
+		animation_picker.select(0)
+	else:
+		animation_picker.add_item("Sin animaciones")
+
+
+func _selected_animation() -> Dictionary:
+	if animation_picker == null:
+		return {}
+	var index := animation_picker.selected
+	if index < 0 or index >= animation_entries.size():
+		return {}
+	return animation_entries[index]
+
+
+func _on_animation_selected(_index: int) -> void:
+	_play_selected_animation()
+
+
+func _play_selected_animation() -> void:
+	var entry := _selected_animation()
+	if entry.is_empty():
+		return
+	# Si cambia el AnimationPlayer, detener el que estaba reproduciendo.
+	for other in animation_entries:
+		var other_player: AnimationPlayer = other["player"]
+		if other_player != entry["player"]:
+			other_player.stop()
+	var player: AnimationPlayer = entry["player"]
+	var name: StringName = entry["name"]
+	player.play(name)
+	pause_button.text = "⏸ Pausar"
+	_report("Reproduciendo: %s" % name)
+
+
+func _toggle_animation_pause() -> void:
+	var entry := _selected_animation()
+	if entry.is_empty():
+		return
+	var player: AnimationPlayer = entry["player"]
+	if player.is_playing():
+		player.pause()
+		pause_button.text = "▶ Continuar"
+		_report("Animación pausada: %s" % entry["name"])
+	else:
+		_play_selected_animation()
+
+
+func _stop_animation() -> void:
+	var entry := _selected_animation()
+	if entry.is_empty():
+		return
+	var player: AnimationPlayer = entry["player"]
+	player.stop()
+	pause_button.text = "⏸ Pausar"
+	_report("Animación detenida: %s" % entry["name"])
 
 
 func _frame_model() -> void:
